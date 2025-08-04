@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Matrix3f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.Random;
@@ -24,9 +25,7 @@ public class BedrockBone {
     public float x;
     public float y;
     public float z;
-    public float xRot;
-    public float yRot;
-    public float zRot;
+    public Quaternionf rotation = new Quaternionf();
     public float xScale = 1;
     public float yScale = 1;
     public float zScale = 1;
@@ -71,10 +70,8 @@ public class BedrockBone {
 
     public void translateAndRotateAndScale(PoseStack poseStack) {
         poseStack.translate(this.x / 16.0F, this.y / 16.0F, this.z / 16.0F);
-        if (this.xRot != 0.0F || this.yRot != 0.0F || this.zRot != 0.0F) {
-            poseStack.last().pose().rotateZYX(this.zRot, this.yRot, this.xRot);
-            poseStack.last().normal().rotateZYX(this.zRot, this.yRot, this.xRot);
-        }
+        poseStack.last().pose().rotate(rotation);
+        poseStack.last().normal().rotate(rotation);
         if (this.xScale != 0.0F || this.yScale != 0.0F || this.zScale != 0.0F) {
             poseStack.last().pose().scale(this.xScale, this.yScale, this.zScale);
             poseStack.last().normal().scale(this.xScale, this.yScale, this.zScale);
