@@ -62,7 +62,7 @@ dependencies {
     // The animation library is already included in jar (jar in jar), 
     // but since modrinth maven cannot handle transitive dependencies,
     // you need to include it to pass the compilation.
-    compileOnly("com.maydaymemory:mae:1.0.0")
+    compileOnly("com.maydaymemory:mae:1.0.2")
 }
 ```
 
