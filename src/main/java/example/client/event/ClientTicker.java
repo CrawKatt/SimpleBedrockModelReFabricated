@@ -2,8 +2,8 @@ package example.client.event;
 
 import example.animation.FPGunAnimationInstance;
 import example.animation.GunAnimationGraph;
-import example.capability.IFPGunAnimationCapability;
-import example.capability.ModCapability;
+import example.capability.FPGunAnimationCapability;
+import example.init.ExampleModRegister;
 import example.item.GunItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -23,12 +23,12 @@ public class ClientTicker {
     public static void onRenderTick(RenderFrameEvent.Pre event) {
         Player player = Minecraft.getInstance().player;
         if (player != null) {
-            player.getCapability(ModCapability.FPGUN_ANIMATION_CAPABILITY).ifPresent(capability -> {
-                GunAnimationGraph animationGraph = capability.getAnimationInstance().getAnimationGraph();
-                if (animationGraph != null) {
-                    animationGraph.tick();
-                }
-            });
+            var cap = player.getData(ExampleModRegister.FP_GUN_ANIMATION);
+            cap.setPlayer(player);
+            GunAnimationGraph animationGraph = cap.getAnimationInstance().getAnimationGraph();
+            if (animationGraph != null) {
+                animationGraph.tick();
+            }
         }
     }
 
@@ -44,16 +44,12 @@ public class ClientTicker {
         // 这里就先简单地判断有没有切换选中的格子，用于测试。
         if (oldHotBarSelected != inventory.selected) {
             ItemStack selected = inventory.getSelected();
-            LazyOptional<IFPGunAnimationCapability> capabilityLazyOptional = player.getCapability(ModCapability.FPGUN_ANIMATION_CAPABILITY);
+            var cap = FPGunAnimationCapability.get(player);
             if (selected.getItem() instanceof GunItem gunItem) {
-                capabilityLazyOptional.ifPresent(capability -> {
-                    FPGunAnimationInstance animationInstance = capability.getAnimationInstance();
-                    animationInstance.updateAnimationGraphAndDraw(gunItem.getAnimationGraph(animationInstance));
-                });
+                FPGunAnimationInstance animationInstance = cap.getAnimationInstance();
+                animationInstance.updateAnimationGraphAndDraw(gunItem.getAnimationGraph(animationInstance));
             } else {
-                capabilityLazyOptional.ifPresent(capability -> {
-                    capability.getAnimationInstance().updateAnimationGraphAndDraw(null);
-                });
+                cap.getAnimationInstance().updateAnimationGraphAndDraw(null);
             }
             oldHotBarSelected = inventory.selected;
         }

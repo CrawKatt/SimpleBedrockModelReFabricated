@@ -8,7 +8,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import example.animation.GunAnimationGraph;
-import example.capability.ModCapability;
+import example.capability.FPGunAnimationCapability;
 import example.init.ExampleModRegister;
 import example.resource.KnownResources;
 import net.minecraft.client.Minecraft;
@@ -28,19 +28,20 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import org.joml.Matrix4f;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 public class DeagleWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer {
     private static final Material material = new Material(TextureAtlas.LOCATION_BLOCKS, KnownResources.DEAGLE.withPrefix("item/"));
 
     private static BedrockModel model;
 
     // 暂时只能想到这么丑的办法
-    @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
     public static class ModelReloadListenerRegister {
         @SubscribeEvent
         public static void onModelReloadListenerRegister(RegisterBedrockModelReloadListenerEvent event) {
@@ -68,12 +69,11 @@ public class DeagleWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer 
             Minecraft mc = Minecraft.getInstance();
             // 从 AnimationInstance 中获取 AnimationGraph，然后计算当前帧的 Pose，然后混合并 apply
             if (mc.getCameraEntity() instanceof Player player) {
-                player.getCapability(ModCapability.FPGUN_ANIMATION_CAPABILITY).ifPresent(capability -> {
-                    GunAnimationGraph animationGraph = capability.getAnimationInstance().getAnimationGraph();
-                    if (animationGraph != null) {
-                        model.applyPose(animationGraph.getPose());
-                    }
-                });
+                var cap = FPGunAnimationCapability.get(player);
+                GunAnimationGraph animationGraph = cap.getAnimationInstance().getAnimationGraph();
+                if (animationGraph != null) {
+                    model.applyPose(animationGraph.getPose());
+                }
             }
             PoseStack poseStack = event.getPoseStack();
             poseStack.pushPose();
@@ -96,19 +96,19 @@ public class DeagleWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer 
                 if (mc.getCameraEntity() instanceof AbstractClientPlayer abstractClientPlayer) {
                     BedrockBone leftHandBone = model.getBone("lefthand_pos");
                     BedrockBone rightHandBone = model.getBone("righthand_pos");
-                    RenderSystem.setShaderTexture(0, abstractClientPlayer.getSkinTextureLocation());
+                    RenderSystem.setShaderTexture(0, abstractClientPlayer.getSkin().texture());
                     PlayerRenderer playerrenderer = (PlayerRenderer)mc.getEntityRenderDispatcher().getRenderer(abstractClientPlayer);
                     if (leftHandBone != null) {
                         Matrix4f globalTransform = leftHandBone.getGlobalTransform();
                         poseStack.pushPose();
-                        poseStack.mulPoseMatrix(globalTransform);
+                        poseStack.mulPose(globalTransform);
                         playerrenderer.renderLeftHand(poseStack, event.getMultiBufferSource(), event.getPackedLight(), abstractClientPlayer);
                         poseStack.popPose();
                     }
                     if (rightHandBone != null) {
                         Matrix4f globalTransform = rightHandBone.getGlobalTransform();
                         poseStack.pushPose();
-                        poseStack.mulPoseMatrix(globalTransform);
+                        poseStack.mulPose(globalTransform);
                         playerrenderer.renderRightHand(poseStack, event.getMultiBufferSource(), event.getPackedLight(), abstractClientPlayer);
                         poseStack.popPose();
                     }

@@ -20,7 +20,7 @@ import net.neoforged.fml.loading.FMLLoader;
 
 import java.util.*;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class DeagleAnimationGraph implements GunAnimationGraph{
     private static final EulerAdditiveBlender eulerAdditiveBlender = new SimpleEulerAdditiveBlender(new ZYXBoneTransformFactory(), ArrayPoseBuilder::new);
 

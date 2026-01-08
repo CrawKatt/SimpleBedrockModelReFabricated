@@ -1,30 +1,29 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.network.message;
 
+import com.github.mcmodderanchor.simplebedrockmodel.SimpleBedrockModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.SwapItemWithOffHand;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkEvent;
-import java.util.function.Supplier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
+public record ServerMessageSwapItem() implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<ServerMessageSwapItem> TYPE = new CustomPacketPayload.Type<>(SimpleBedrockModel.modLoc("swap_item"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, ServerMessageSwapItem> STREAM_CODEC = StreamCodec.unit(new ServerMessageSwapItem());
 
-public record ServerMessageSwapItem() {
-    public static void encode(ServerMessageSwapItem message, FriendlyByteBuf buf) {
+    @NotNull
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public static ServerMessageSwapItem decode(FriendlyByteBuf buf) {
-        return new ServerMessageSwapItem();
-    }
-    public static void handle(ServerMessageSwapItem message, Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        if (context.getDirection().getReceptionSide().isClient()) {
-            MinecraftForge.EVENT_BUS.post(new SwapItemWithOffHand());
-        }
-        context.setPacketHandled(true);
-        if (context.getDirection().getReceptionSide().isClient()) {
-            MinecraftForge.EVENT_BUS.post(new SwapItemWithOffHand());
-        }
-        context.setPacketHandled(true);
+    public static void handle(ServerMessageSwapItem message, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.flow().isClientbound()) {
+                NeoForge.EVENT_BUS.post(new SwapItemWithOffHand());
+            }
+        });
     }
 }

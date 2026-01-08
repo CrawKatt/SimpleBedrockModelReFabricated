@@ -1,7 +1,5 @@
 package example.client.event;
 
-import example.client.render.blockentity.TestBlockEntityRenderer;
-import example.init.ExampleModRegister;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -12,6 +10,6 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 public class RegistryHandler {
     @SubscribeEvent
     public static void registerBlockEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ExampleModRegister.TEST_BLOCK_ENTITY_TYPE, TestBlockEntityRenderer::new);
+//        event.registerBlockEntityRenderer(ExampleModRegister.TEST_BLOCK_ENTITY_TYPE, TestBlockEntityRenderer::new);
     }
 }

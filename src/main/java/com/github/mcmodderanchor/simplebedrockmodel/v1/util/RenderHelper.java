@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.HumanoidArm;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.ClientHooks;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
@@ -35,13 +36,12 @@ public final class RenderHelper {
 
     private static void innerBlit(Matrix4f matrix, float x1, float x2, float y1, float y2, float blitOffset, float minU, float maxU, float minV, float maxV) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferbuilder.vertex(matrix, x1, y2, blitOffset).uv(minU, maxV).endVertex();
-        bufferbuilder.vertex(matrix, x2, y2, blitOffset).uv(maxU, maxV).endVertex();
-        bufferbuilder.vertex(matrix, x2, y1, blitOffset).uv(maxU, minV).endVertex();
-        bufferbuilder.vertex(matrix, x1, y1, blitOffset).uv(minU, minV).endVertex();
-        BufferUploader.draw(bufferbuilder.end());
+        BufferBuilder bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        bufferbuilder.addVertex(matrix, x1, y2, blitOffset).setUv(minU, maxV);
+        bufferbuilder.addVertex(matrix, x2, y2, blitOffset).setUv(maxU, maxV);
+        bufferbuilder.addVertex(matrix, x2, y1, blitOffset).setUv(maxU, minV);
+        bufferbuilder.addVertex(matrix, x1, y1, blitOffset).setUv(minU, minV);
+        BufferUploader.draw(bufferbuilder.buildOrThrow());
     }
 
 //    public static void enableItemEntityStencilTest() {
@@ -77,7 +77,7 @@ public final class RenderHelper {
         PlayerRenderer renderer = (PlayerRenderer) renderManager.getRenderer(player);
         MultiBufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
         int oldId = RenderSystem.getShaderTexture(0);
-        RenderSystem.setShaderTexture(0, player.getSkinTextureLocation());
+        RenderSystem.setShaderTexture(0, player.getSkin().texture());
 
         if (hand == HumanoidArm.RIGHT) {
             renderRightHand(matrixStack, buffer, combinedLight, player, renderer);
@@ -89,15 +89,15 @@ public final class RenderHelper {
 
     // 原版的方法只重置y轴且会被pose影响，故将实现复制出来
     @SuppressWarnings("UnstableApiUsage")
-    public static void renderRightHand(PoseStack pPoseStack, MultiBufferSource pBuffer, int pCombinedLight, AbstractClientPlayer pPlayer, PlayerRenderer pRenderer) {
-        if(!net.minecraftforge.client.ForgeHooksClient.renderSpecificFirstPersonArm(pPoseStack, pBuffer, pCombinedLight, pPlayer, HumanoidArm.RIGHT))
-            renderHand(pPoseStack, pBuffer, pCombinedLight, pPlayer, (pRenderer.getModel()).rightArm, (pRenderer.getModel()).rightSleeve, pRenderer);
+    public static void renderRightHand(PoseStack poseStack, MultiBufferSource buffer, int combinedLight, AbstractClientPlayer player, PlayerRenderer pRenderer) {
+        if(!ClientHooks.renderSpecificFirstPersonArm(poseStack, buffer, combinedLight, player, HumanoidArm.RIGHT))
+            renderHand(poseStack, buffer, combinedLight, player, (pRenderer.getModel()).rightArm, (pRenderer.getModel()).rightSleeve, pRenderer);
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    public static void renderLeftHand(PoseStack pPoseStack, MultiBufferSource pBuffer, int pCombinedLight, AbstractClientPlayer pPlayer, PlayerRenderer pRenderer) {
-        if(!net.minecraftforge.client.ForgeHooksClient.renderSpecificFirstPersonArm(pPoseStack, pBuffer, pCombinedLight, pPlayer, HumanoidArm.LEFT))
-            renderHand(pPoseStack, pBuffer, pCombinedLight, pPlayer, (pRenderer.getModel()).leftArm, (pRenderer.getModel()).leftSleeve, pRenderer);
+    public static void renderLeftHand(PoseStack poseStack, MultiBufferSource buffer, int combinedLight, AbstractClientPlayer player, PlayerRenderer pRenderer) {
+        if(!ClientHooks.renderSpecificFirstPersonArm(poseStack, buffer, combinedLight, player, HumanoidArm.LEFT))
+            renderHand(poseStack, buffer, combinedLight, player, (pRenderer.getModel()).leftArm, (pRenderer.getModel()).leftSleeve, pRenderer);
     }
 
     // todo 需要测试实现
@@ -110,10 +110,10 @@ public final class RenderHelper {
         pRendererArm.xRot = 0.0F;
         pRendererArm.yRot = 0.0F;
         pRendererArm.zRot = 0.0F;
-        pRendererArm.render(pPoseStack, pBuffer.getBuffer(RenderType.entitySolid(pPlayer.getSkinTextureLocation())), pCombinedLight, OverlayTexture.NO_OVERLAY);
+        pRendererArm.render(pPoseStack, pBuffer.getBuffer(RenderType.entitySolid(pPlayer.getSkin().texture())), pCombinedLight, OverlayTexture.NO_OVERLAY);
         pRendererArmwear.xRot = 0.0F;
         pRendererArmwear.yRot = 0.0F;
         pRendererArmwear.zRot = 0.0F;
-        pRendererArmwear.render(pPoseStack, pBuffer.getBuffer(RenderType.entityTranslucent(pPlayer.getSkinTextureLocation())), pCombinedLight, OverlayTexture.NO_OVERLAY);
+        pRendererArmwear.render(pPoseStack, pBuffer.getBuffer(RenderType.entityTranslucent(pPlayer.getSkin().texture())), pCombinedLight, OverlayTexture.NO_OVERLAY);
     }
 }
