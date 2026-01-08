@@ -1,15 +1,17 @@
-package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
+package com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium;
 
+import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockCubePerFace;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.FaceUVsItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import me.jellysquid.mods.sodium.client.render.vertex.VertexConsumerUtils;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
+import net.caffeinemc.mods.sodium.client.render.vertex.VertexConsumerUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-public class SodiumBedrockCubeBox extends BedrockCubeBox implements ISodiumVertexWriter {
-    public SodiumBedrockCubeBox(float texOffX, float texOffY, float x, float y, float z, float width, float height, float depth, float delta, boolean mirror, float texWidth, float texHeight) {
-        super(texOffX, texOffY, x, y, z, width, height, depth, delta, mirror, texWidth, texHeight);
+public class SodiumBedrockCubePerFace extends BedrockCubePerFace implements ISodiumVertexWriter {
+    public SodiumBedrockCubePerFace(float x, float y, float z, float width, float height, float depth, float delta, float texWidth, float texHeight, FaceUVsItem faces) {
+        super(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
     }
 
     @Override
@@ -30,19 +32,19 @@ public class SodiumBedrockCubeBox extends BedrockCubeBox implements ISodiumVerte
 
         for (int i = 0; i < NUM_CUBE_FACES; i++) {
             emitVertex(ptr, VERTICES[VERTEX_ORDER[i][0]].x, VERTICES[VERTEX_ORDER[i][0]].y, VERTICES[VERTEX_ORDER[i][0]].z,
-                    color, uvs[uvOrder[i][1]], uvs[uvOrder[i][2]], overlay, lightmap, NORMALS[i]);
+                    color, uvs[i][1], uvs[i][2], overlay, lightmap, NORMALS[i]);
             ptr += STRIDE;
 
             emitVertex(ptr, VERTICES[VERTEX_ORDER[i][1]].x, VERTICES[VERTEX_ORDER[i][1]].y, VERTICES[VERTEX_ORDER[i][1]].z,
-                    color, uvs[uvOrder[i][0]], uvs[uvOrder[i][2]], overlay, lightmap, NORMALS[i]);
+                    color, uvs[i][0], uvs[i][2], overlay, lightmap, NORMALS[i]);
             ptr += STRIDE;
 
             emitVertex(ptr, VERTICES[VERTEX_ORDER[i][2]].x, VERTICES[VERTEX_ORDER[i][2]].y, VERTICES[VERTEX_ORDER[i][2]].z,
-                    color, uvs[uvOrder[i][0]], uvs[uvOrder[i][3]], overlay, lightmap, NORMALS[i]);
+                    color, uvs[i][0], uvs[i][3], overlay, lightmap, NORMALS[i]);
             ptr += STRIDE;
 
             emitVertex(ptr, VERTICES[VERTEX_ORDER[i][3]].x, VERTICES[VERTEX_ORDER[i][3]].y, VERTICES[VERTEX_ORDER[i][3]].z,
-                    color, uvs[uvOrder[i][1]], uvs[uvOrder[i][3]], overlay, lightmap, NORMALS[i]);
+                    color, uvs[i][1], uvs[i][3], overlay, lightmap, NORMALS[i]);
             ptr += STRIDE;
             vertexCount += 4;
         }

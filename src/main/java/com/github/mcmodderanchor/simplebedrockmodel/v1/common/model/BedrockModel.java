@@ -1,5 +1,10 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.embeddium.EmbeddiumBedrockCubeBox;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.embeddium.EmbeddiumBedrockCubePerFace;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.embeddium.EmbeddiumCompat;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium.SodiumBedrockCubeBox;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium.SodiumBedrockCubePerFace;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium.SodiumCompat;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.BoneIndexProvider;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.*;
@@ -8,8 +13,8 @@ import com.maydaymemory.mae.basic.*;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector3f;
@@ -120,6 +125,9 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
         if (SodiumCompat.isSodiumInstalled()) {
             return new SodiumBedrockCubeBox(texOffX, texOffY, x, y, z, width, height, depth, delta, mirror, texWidth, texHeight);
         }
+        if (EmbeddiumCompat.isEmbeddiumInstalled()) {
+            return new EmbeddiumBedrockCubeBox(texOffX, texOffY, x, y, z, width, height, depth, delta, mirror, texWidth, texHeight);
+        }
         return new BedrockCubeBox(texOffX, texOffY, x, y, z, width, height, depth, delta, mirror, texWidth, texHeight);
     }
 
@@ -127,6 +135,9 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
                                             float texWidth, float texHeight, FaceUVsItem faces) {
         if (SodiumCompat.isSodiumInstalled()) {
             return new SodiumBedrockCubePerFace(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
+        }
+        if (EmbeddiumCompat.isEmbeddiumInstalled()) {
+            return new EmbeddiumBedrockCubePerFace(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
         }
         return new BedrockCubePerFace(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
     }

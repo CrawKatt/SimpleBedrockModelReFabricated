@@ -1,6 +1,6 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.event;
 
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 
 public class SwapItemWithOffHand extends Event {
     public SwapItemWithOffHand() {

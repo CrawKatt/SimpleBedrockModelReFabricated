@@ -1,9 +1,10 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium;
 
-import net.minecraftforge.fml.ModList;
+
+import net.neoforged.fml.ModList;
 
 public class SodiumCompat {
-    public static final String SODIUM = "embeddium";
+    public static final String SODIUM = "sodium";
     public static boolean IS_SODIUM_INSTALLED = false;
 
     public static void init() {

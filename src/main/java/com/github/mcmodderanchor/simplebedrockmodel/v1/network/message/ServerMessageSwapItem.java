@@ -4,20 +4,24 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.SwapItemWith
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 public record ServerMessageSwapItem() {
-
     public static void encode(ServerMessageSwapItem message, FriendlyByteBuf buf) {
     }
 
     public static ServerMessageSwapItem decode(FriendlyByteBuf buf) {
         return new ServerMessageSwapItem();
     }
-
     public static void handle(ServerMessageSwapItem message, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
+        if (context.getDirection().getReceptionSide().isClient()) {
+            MinecraftForge.EVENT_BUS.post(new SwapItemWithOffHand());
+        }
+        context.setPacketHandled(true);
         if (context.getDirection().getReceptionSide().isClient()) {
             MinecraftForge.EVENT_BUS.post(new SwapItemWithOffHand());
         }

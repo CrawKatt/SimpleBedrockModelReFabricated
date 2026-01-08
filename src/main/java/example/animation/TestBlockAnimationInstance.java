@@ -5,9 +5,9 @@ import com.maydaymemory.mae.control.misc.RealtimeVelocityEstimatorNode;
 import com.maydaymemory.mae.control.statemachine.AnimationStateMachine;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.loading.FMLLoader;
 
 /**
  * Animation Instance 一般统合了某个游戏对象的所有动画需要的上下文，并且统一负责同步动画状态

@@ -18,7 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.ViewportEvent;
+
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
@@ -104,7 +105,7 @@ public abstract class AbstractGeoItemRenderer<M extends BedrockModel>
         if (ctx.firstPerson()) {
             return;
         }
-        render(stack, ctx, poseStack, bufferSource, light, overlay, Minecraft.getInstance().getPartialTick());
+        render(stack, ctx, poseStack, bufferSource, light, overlay, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true));
     }
 
     protected void render(ItemStack stack, ItemDisplayContext ctx, PoseStack poseStack, MultiBufferSource bufferSource,

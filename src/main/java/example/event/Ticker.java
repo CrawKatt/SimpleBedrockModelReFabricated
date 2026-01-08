@@ -8,19 +8,18 @@ import example.item.GunItem;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class Ticker {
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.PlayerTickEvent event) {
-        if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.START) {
-            Player player = event.player;
+    public static void onServerTick(PlayerTickEvent.Pre event) {
+        if (!event.getEntity().level().isClientSide()) {
+            Player player = event.getEntity();
             Inventory inventory = player.getInventory();
             // 需要先更新 animationGraph 再 tick，保持逻辑严密
             LazyOptional<IFPGunAnimationCapability> capabilityLazyOptional = player.getCapability(ModCapability.FPGUN_ANIMATION_CAPABILITY);

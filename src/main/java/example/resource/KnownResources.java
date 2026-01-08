@@ -5,18 +5,18 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockMode
 import com.github.mcmodderanchor.simplebedrockmodel.v1.resource.RawResourceLoaders;
 import example.init.ExampleModRegister;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.ArrayList;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class KnownResources {
     public static final ArrayList<ResourceLocation> ANIMATION_AND_MODEL = new ArrayList<>();
     public static final ArrayList<ResourceLocation> MODEL = new ArrayList<>();
 
-    public static final ResourceLocation TEST = registerAnimationAndModel(new ResourceLocation(ExampleModRegister.MOD_ID, "test"));
-    public static final ResourceLocation DEAGLE = registerAnimationAndModel(new ResourceLocation(ExampleModRegister.MOD_ID, "deagle"));
+    public static final ResourceLocation TEST = registerAnimationAndModel(ResourceLocation.fromNamespaceAndPath(ExampleModRegister.MOD_ID, "test"));
+    public static final ResourceLocation DEAGLE = registerAnimationAndModel(ResourceLocation.fromNamespaceAndPath(ExampleModRegister.MOD_ID, "deagle"));
 
     private static ResourceLocation registerAnimationAndModel(ResourceLocation location) {
         ANIMATION_AND_MODEL.add(location);

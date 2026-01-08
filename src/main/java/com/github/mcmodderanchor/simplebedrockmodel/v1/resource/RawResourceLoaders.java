@@ -1,8 +1,8 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.resource;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.GsonUtil;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLLoader;
 
 import java.io.IOException;
 import java.io.InputStream;

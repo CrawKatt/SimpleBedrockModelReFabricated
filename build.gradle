@@ -1,114 +1,104 @@
-buildscript {
-    repositories {
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        maven { url = 'https://maven.parchmentmc.org' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
-}
-
 plugins {
-    id 'eclipse'
+    id 'java-library'
     id 'idea'
-    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
-    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    id 'net.neoforged.moddev' version '2.0.+'
+    id "com.modrinth.minotaur" version "2.8.7"
 }
 
-apply plugin: 'org.spongepowered.mixin'
-
-group = mod_group_id
 version = mod_version
+group = mod_group_id
 archivesBaseName = 'simplebedrockmodel'
 
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
-}
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-minecraft {
-    mappings channel: mapping_channel, version: mapping_version
-    copyIdeResources = true
+neoForge {
+    version = project.neo_version
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
     runs {
-        configureEach {
-            jvmArgs = [
-                    "-XX:+IgnoreUnrecognizedVMOptions",
-                    "-XX:+AllowEnhancedClassRedefinition"
-            ]
-            workingDirectory project.file('run')
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            mods {
-            }
-        }
-
         client {
-            property 'forge.enabledGameTestNamespaces', mod_id
-        }
-
-        client2 {
-            parent minecraft.runs.client
-            workingDirectory project.file('run/client_b')
-            // 设定用户名
-            args '--username', 'mayday_memory'
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
         server {
-            property 'forge.enabledGameTestNamespaces', mod_id
-            args '--nogui'
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+
         gameTestServer {
-            property 'forge.enabledGameTestNamespaces', mod_id
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
         data {
-            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
         }
     }
-}
 
-mixin {
-    add sourceSets.main, "${mod_id}.refmap.json"
-
-    config "${mod_id}.mixins.json"
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
 }
 
 sourceSets.main.resources {
     srcDir 'src/generated/resources'
 }
 
-repositories {
-    flatDir {
-        dirs 'libs'
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+
+    // 自定义一个 minecraftLibrary，方便引入需要 jarJar 的库
+    mcLib
+    implementation {
+        extendsFrom mcLib
     }
+    additionalRuntimeClasspath {
+        extendsFrom mcLib
+    }
+}
+
+repositories {
+    mavenLocal()
     maven {
+        name = "Modrinth"
         url = "https://api.modrinth.com/maven"
     }
     mavenLocal()
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    runtimeOnly fg.deobf("maven.modrinth:embeddium:0.3.31+mc1.20.1")
-    compileOnly fg.deobf("maven.modrinth:embeddium:0.3.31+mc1.20.1")
-    jarJar minecraftLibrary("com.maydaymemory:mae:1.1.1") {
-        jarJar.ranged(it, "[1.1.1,)")
+    implementation "maven.modrinth:sodium:mc1.21-0.6.0-beta.2-neoforge"
+    compileOnly "maven.modrinth:embeddium:1.0.11+mc1.21.1-neoforge"
+    mcLib jarJar("com.maydaymemory:mae:1.1.1") {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'org.joml', module: 'joml'
     }
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
-tasks.named('processResources', ProcessResources).configure {
+// 用于 neoforge.mods 里替换那一堆 ${xxxx}
+tasks.withType(ProcessResources).configureEach {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            forge_version          : forge_version,
-            forge_version_range    : forge_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
@@ -117,28 +107,15 @@ tasks.named('processResources', ProcessResources).configure {
             mod_authors            : mod_authors,
             mod_description        : mod_description
     ]
-
     inputs.properties replaceProperties
 
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-        expand replaceProperties + [project: project]
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
     }
 }
 
-//modrinth {
-//    token = System.getenv("MODRINTH_TOKEN")
-//
-//    projectId = mod_id
-//    versionName = "${mod_id}-${version}"
-//    versionNumber = mod_version
-//    uploadFile = "${buildDir}/libs/${mod_id}-${version}.jar"
-//    additionalFiles = ["${buildDir}/libs/${mod_id}-${version}-sources.jar"]
-//    gameVersions = [minecraft_version]
-//    //debugMode = true
-//}
-
+// 生成 manifest 内容，用于填充版本信息等内容
 jar {
-    archiveClassifier.set('min')
     manifest {
         attributes([
                 "Specification-Title"     : mod_id,
@@ -152,18 +129,18 @@ jar {
     }
     exclude 'example/**'
     exclude 'assets/example/**'
-    exclude 'data/example/**'
-    finalizedBy 'reobfJar'
 }
 
-tasks.named('jarJar', Jar).configure {
-    // 取消 -all 后缀
-    archiveClassifier.set('')
-    exclude 'example/**'
-    exclude 'assets/example/**'
-    exclude 'data/example/**'
+// 让 idea 主动下载前置库的源码和 Javadoc
+// 新版本 idea 默认不会下载这两个，这虽然加快了构建速度，但是不方便调试
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
 }
 
+// 必须，编码需要显式指定为 UTF
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
@@ -171,4 +148,17 @@ tasks.withType(JavaCompile).configureEach {
 java {
     // 编译源码文件，方便发布 maven
     withSourcesJar()
+}
+
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+
+    projectId = mod_id
+    versionName = "${mod_id}-${version}"
+    versionNumber = mod_version
+    uploadFile = "${layout.buildDirectory.get()}/libs/${mod_id}-${version}.jar"
+    additionalFiles = ["${layout.buildDirectory.get()}/libs/${mod_id}-${version}-sources.jar"]
+    gameVersions = [minecraft_version]
+    loaders = ["neoforge"]
+    //debugMode = true
 }

@@ -1,12 +1,13 @@
-package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
+package com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.embeddium;
 
-import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
+
+import org.embeddedt.embeddium.api.vertex.buffer.VertexBufferWriter;
+import org.embeddedt.embeddium.api.vertex.format.common.ModelVertex;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-public interface ISodiumVertexWriter {
+public interface IEmbeddiumVertexWriter {
     int STRIDE = ModelVertex.STRIDE;
     int SIZE = 6 * 4;
     long SCRATCH_BUFFER = MemoryUtil.nmemAlignedAlloc(64, SIZE * STRIDE);

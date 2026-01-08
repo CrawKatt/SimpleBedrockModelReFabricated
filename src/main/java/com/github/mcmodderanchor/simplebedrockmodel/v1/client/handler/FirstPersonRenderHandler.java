@@ -8,17 +8,18 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderHandEvent;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.Optional;
 
-@Mod.EventBusSubscriber(Dist.CLIENT)
+@EventBusSubscriber(Dist.CLIENT)
 public class FirstPersonRenderHandler {
 
     private static int realSelectedSlot = -1;
@@ -60,9 +61,7 @@ public class FirstPersonRenderHandler {
     }
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START) return;
-
+    public static void onClientTick(RenderFrameEvent.Pre event) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
 
@@ -157,14 +156,11 @@ public class FirstPersonRenderHandler {
     }
 
     @SubscribeEvent
-    public static void tickAnimation(TickEvent.RenderTickEvent event) {
-        if (event.phase != TickEvent.Phase.START) {
-            return;
-        }
+    public static void tickAnimation(RenderFrameEvent.Pre event) {
         var ani = getActiveAnimationInstance();
         if (ani != null) {
             ani.triggerDraw();
-            ani.tick(event.renderTickTime);
+            ani.tick(event.getPartialTick().getGameTimeDeltaPartialTick(true));
         }
     }
 
