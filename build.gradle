@@ -129,6 +129,7 @@ jar {
     }
     exclude 'example/**'
     exclude 'assets/example/**'
+    exclude 'data/example/**'
 }
 
 // 让 idea 主动下载前置库的源码和 Javadoc

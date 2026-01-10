@@ -80,40 +80,9 @@ public final class RenderHelper {
         RenderSystem.setShaderTexture(0, player.getSkin().texture());
 
         if (hand == HumanoidArm.RIGHT) {
-            renderRightHand(matrixStack, buffer, combinedLight, player, renderer);
+            renderer.renderRightHand(matrixStack, buffer, combinedLight, player);
         } else {
-            renderLeftHand(matrixStack, buffer, combinedLight, player, renderer);
+            renderer.renderLeftHand(matrixStack, buffer, combinedLight, player);
         }
-        RenderSystem.setShaderTexture(0, oldId);
-    }
-
-    // 原版的方法只重置y轴且会被pose影响，故将实现复制出来
-    @SuppressWarnings("UnstableApiUsage")
-    public static void renderRightHand(PoseStack poseStack, MultiBufferSource buffer, int combinedLight, AbstractClientPlayer player, PlayerRenderer pRenderer) {
-        if(!ClientHooks.renderSpecificFirstPersonArm(poseStack, buffer, combinedLight, player, HumanoidArm.RIGHT))
-            renderHand(poseStack, buffer, combinedLight, player, (pRenderer.getModel()).rightArm, (pRenderer.getModel()).rightSleeve, pRenderer);
-    }
-
-    @SuppressWarnings("UnstableApiUsage")
-    public static void renderLeftHand(PoseStack poseStack, MultiBufferSource buffer, int combinedLight, AbstractClientPlayer player, PlayerRenderer pRenderer) {
-        if(!ClientHooks.renderSpecificFirstPersonArm(poseStack, buffer, combinedLight, player, HumanoidArm.LEFT))
-            renderHand(poseStack, buffer, combinedLight, player, (pRenderer.getModel()).leftArm, (pRenderer.getModel()).leftSleeve, pRenderer);
-    }
-
-    // todo 需要测试实现
-    public static void renderHand(PoseStack pPoseStack, MultiBufferSource pBuffer, int pCombinedLight, AbstractClientPlayer pPlayer, ModelPart pRendererArm, ModelPart pRendererArmwear, PlayerRenderer pRenderer) {
-        PlayerModel<AbstractClientPlayer> playermodel = pRenderer.getModel();
-        playermodel.attackTime = 0.0F;
-        playermodel.crouching = false;
-        playermodel.swimAmount = 0.0F;
-        playermodel.setupAnim(pPlayer, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-        pRendererArm.xRot = 0.0F;
-        pRendererArm.yRot = 0.0F;
-        pRendererArm.zRot = 0.0F;
-        pRendererArm.render(pPoseStack, pBuffer.getBuffer(RenderType.entitySolid(pPlayer.getSkin().texture())), pCombinedLight, OverlayTexture.NO_OVERLAY);
-        pRendererArmwear.xRot = 0.0F;
-        pRendererArmwear.yRot = 0.0F;
-        pRendererArmwear.zRot = 0.0F;
-        pRendererArmwear.render(pPoseStack, pBuffer.getBuffer(RenderType.entityTranslucent(pPlayer.getSkin().texture())), pCombinedLight, OverlayTexture.NO_OVERLAY);
     }
 }

@@ -19,7 +19,10 @@ public class BedrockCubePerFace implements BedrockCube {
     protected final float x;
     protected final float y;
     protected final float z;
-    protected final float[][] uvs = new float[6][4];
+    // 每个面存储 8 个值: [右上U, 右上V, 左上U, 左上V, 左下U, 左下V, 右下U, 右下V]
+    protected final float[][] uvs = new float[6][8];
+    // 记录哪些面是空的，不进行渲染，int 位掩码
+    protected int emptyFacesMask = 0;
 
     static {
         for (int i = 0; i < VERTICES.length; i++) {
@@ -47,17 +50,15 @@ public class BedrockCubePerFace implements BedrockCube {
     private void fillUV(Direction direction, FaceUVsItem faces, float texWidth, float texHeight) {
         FaceItem face = faces.getFace(direction);
         if (face == null) {
+            emptyFacesMask |= (1 << direction.ordinal());
             return;
         }
         float[] uvSize = face.getUvSize();
-        float[] uv = face.getUv();
         if (equalZero(uvSize)) {
             return;
         }
-        uvs[direction.ordinal()][0] = uv[0] / texWidth;
-        uvs[direction.ordinal()][1] = (uv[0] + uvSize[0]) / texWidth;
-        uvs[direction.ordinal()][2] = uv[1] / texHeight;
-        uvs[direction.ordinal()][3] = (uv[1] + uvSize[1]) / texHeight;
+        float[] rotatedUVs = face.getRotatedUVs(texWidth, texHeight);
+        System.arraycopy(rotatedUVs, 0, uvs[direction.ordinal()], 0, 8);
     }
 
     protected void prepareVertices(Matrix4f pose) {
@@ -80,6 +81,12 @@ public class BedrockCubePerFace implements BedrockCube {
         prepareVertices(matrix4f);
 
         for (int i = 0; i < NUM_CUBE_FACES; i++) {
+            if ((emptyFacesMask & (1 << i)) != 0) {
+                continue;
+            }
+
+            // uvs[i]: [右上U, 右上V, 左上U, 左上V, 左下U, 左下V, 右下U, 右下V]
+            // 顶点0: 右上, 顶点1: 左上, 顶点2: 左下, 顶点3: 右下
             consumer.addVertex(VERTICES[VERTEX_ORDER[i][0]].x, VERTICES[VERTEX_ORDER[i][0]].y, VERTICES[VERTEX_ORDER[i][0]].z)
                     .setColor(r, g, b, a).setUv(uvs[i][1], uvs[i][2])
                     .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
