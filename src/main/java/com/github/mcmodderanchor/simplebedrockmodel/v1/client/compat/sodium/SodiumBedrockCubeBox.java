@@ -1,7 +1,7 @@
-package com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium;
+package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 
-import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockCubeBox;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
@@ -30,7 +30,10 @@ public class SodiumBedrockCubeBox extends BedrockCubeBox implements ISodiumVerte
         int vertexCount = 0;
         long ptr = SCRATCH_BUFFER;
 
+        boolean enableCulling = RenderSystem.getModelViewMatrix().m32() == 0;
         for (int i = 0; i < NUM_CUBE_FACES; i++) {
+            if (enableCulling && !shouldRenderFace(i, normals)) continue;
+
             emitVertex(ptr, VERTICES[VERTEX_ORDER[i][0]].x, VERTICES[VERTEX_ORDER[i][0]].y, VERTICES[VERTEX_ORDER[i][0]].z,
                     color, uvs[uvOrder[i][1]], uvs[uvOrder[i][2]], overlay, lightmap, NORMALS[i]);
             ptr += STRIDE;
@@ -50,5 +53,13 @@ public class SodiumBedrockCubeBox extends BedrockCubeBox implements ISodiumVerte
         }
 
         flush(writer, vertexCount);
+    }
+
+    private boolean shouldRenderFace(int face, Vector3f[] normals) {
+        int[] verts = VERTEX_ORDER[face];
+        float cx = VERTICES[verts[0]].x + VERTICES[verts[2]].x;
+        float cy = VERTICES[verts[0]].y + VERTICES[verts[2]].y;
+        float cz = VERTICES[verts[0]].z + VERTICES[verts[2]].z;
+        return cx * normals[face].x + cy * normals[face].y + cz * normals[face].z <= 0;
     }
 }
