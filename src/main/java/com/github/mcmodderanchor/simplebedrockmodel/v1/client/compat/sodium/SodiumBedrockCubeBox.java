@@ -1,5 +1,6 @@
-package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
+package com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium;
 
+import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockCubeBox;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import com.mojang.blaze3d.vertex.PoseStack;

@@ -1,4 +1,4 @@
-package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
+package com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockCubePerFace;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.FaceUVsItem;
