@@ -4,6 +4,7 @@ import example.animation.DeagleAnimationGraph;
 import example.animation.FPGunAnimationInstance;
 import example.animation.GunAnimationGraph;
 import example.client.render.item.DeagleWithoutLevelRenderer;
+import example.init.ExampleModRegister;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -11,17 +12,22 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 
-import java.util.function.Consumer;
-
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class DeagleItem extends Item implements GunItem {
     public DeagleItem() {
         super(new Properties().stacksTo(1));
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public boolean onEntitySwing(ItemStack stack, LivingEntity entity, InteractionHand hand) {
 //        entity.getCapability(ModCapability.FPGUN_ANIMATION_CAPABILITY).ifPresent(capability -> {
 //            capability.getAnimationInstance().trigger();
@@ -35,24 +41,27 @@ public class DeagleItem extends Item implements GunItem {
 //    }
 
     @Override
+    @ParametersAreNonnullByDefault
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
         return false;
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
         return true;
     }
 
-    @Deprecated
-    @Override
-    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        consumer.accept(new IClientItemExtensions() {
+    @SubscribeEvent
+    public static void initializeClient(RegisterClientExtensionsEvent event) {
+        event.registerItem(new IClientItemExtensions() {
+            public static final DeagleWithoutLevelRenderer render = new DeagleWithoutLevelRenderer();
+
             @Override
-            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                return new DeagleWithoutLevelRenderer();
+            public @NotNull BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return render;
             }
-        });
+        }, ExampleModRegister.DEAGLE_ITEM);
     }
 
     @Override

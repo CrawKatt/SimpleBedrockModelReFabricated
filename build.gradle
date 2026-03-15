@@ -79,6 +79,15 @@ repositories {
         name = "Modrinth"
         url = "https://api.modrinth.com/maven"
     }
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+        content {
+            includeGroup "curse.maven"
+        }
+    }
     mavenLocal()
 }
 
@@ -90,6 +99,10 @@ dependencies {
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'org.joml', module: 'joml'
     }
+
+    // 测试用mod
+    compileOnly "curse.maven:epic-fight-mod-405076:7734081"
+    runtimeOnly "curse.maven:playeranimator-658587:7389814"
 }
 
 // 用于 neoforge.mods 里替换那一堆 ${xxxx}
