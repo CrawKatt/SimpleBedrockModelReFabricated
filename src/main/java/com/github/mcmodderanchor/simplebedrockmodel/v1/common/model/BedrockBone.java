@@ -14,6 +14,8 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.Map;
+
 public class BedrockBone {
     @OnlyIn(Dist.CLIENT)
     private static class ClientConstants {
@@ -43,6 +45,7 @@ public class BedrockBone {
     public boolean visible = true;
     public boolean illuminated = false;
     public boolean mirror;
+    private Map<String, LocatorData> locators = Map.of();
 
     @OnlyIn(Dist.CLIENT)
     public void render(PoseStack poseStack, VertexConsumer consumer, int lightmap, int overlay) {
@@ -125,5 +128,13 @@ public class BedrockBone {
 
     public ObjectList<BedrockBone> getChildren() {
         return children;
+    }
+
+    public Map<String, LocatorData> getLocators() {
+        return locators;
+    }
+
+    public void setLocators(Map<String, LocatorData> locators) {
+        this.locators = locators;
     }
 }
