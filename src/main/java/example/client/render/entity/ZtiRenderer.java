@@ -1,6 +1,7 @@
 package example.client.render.entity;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.model.EntityModel;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.render.backend.BedrockRenderDispatcher;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.resource.BedrockModelResourceSet;
 import com.google.common.base.Suppliers;
 import com.maydaymemory.mae.basic.ArrayPoseBuilder;
@@ -9,7 +10,6 @@ import com.maydaymemory.mae.basic.ZYXBoneTransformFactory;
 import com.maydaymemory.mae.blend.EulerAdditiveBlender;
 import com.maydaymemory.mae.blend.SimpleEulerAdditiveBlender;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import example.entity.Zti;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -49,8 +49,8 @@ public class ZtiRenderer extends EntityRenderer<Zti> {
 
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot)));
 
-            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutout(TEXTURE));
-            model.renderToBuffer(poseStack, consumer, packedLight,
+            RenderType renderType = RenderType.entityCutout(TEXTURE);
+            BedrockRenderDispatcher.render(model, poseStack, bufferSource, renderType, packedLight,
                     OverlayTexture.pack(0f, entity.hurtTime > 0 || entity.deathTime > 0)
             );
             model.applyPose(model.getBindPose());

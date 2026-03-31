@@ -3,6 +3,7 @@ package example.client.render.item;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockBone;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.ParticleEffectData;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.render.backend.BedrockRenderDispatcher;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockModelReloadListenerEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.data.ParticleEffectDefinition;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.render.CameraStateCache;
@@ -206,7 +207,8 @@ public class DeagleWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer 
                 poseStack.translate(0.125, -0.5, -1.03125);
                 // 执行渲染
                 VertexConsumer buffer = material.buffer(event.getMultiBufferSource(), RenderType::entityCutout);
-                model.renderToBuffer(poseStack, buffer, event.getPackedLight(), OverlayTexture.NO_OVERLAY);
+                BedrockRenderDispatcher.render(model, poseStack, event.getMultiBufferSource(),
+                        material, RenderType::entityCutout, event.getPackedLight(), OverlayTexture.NO_OVERLAY);
                 // 渲染手臂
                 if (mc.getCameraEntity() instanceof AbstractClientPlayer abstractClientPlayer) {
                     BedrockBone leftHandBone = model.getBone("lefthand_pos");
@@ -252,8 +254,8 @@ public class DeagleWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer 
         }
         poseStack.pushPose();
         poseStack.translate(0.5, 0, 0.5);
-        VertexConsumer buffer = material.buffer(bufferSource, RenderType::entityCutout);
-        model.renderToBuffer(poseStack, buffer, light, overlay);
+        BedrockRenderDispatcher.render(model, poseStack, bufferSource,
+                material, RenderType::entityCutout, light, overlay);
         poseStack.popPose();
     }
 

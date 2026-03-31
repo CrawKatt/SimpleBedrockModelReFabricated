@@ -90,9 +90,11 @@ public class ParticleEmitterInstance {
             this.localPosition = localSpace.position();
             // position=false, rotation=true 是无效组合，按 rotation=false 处理
             this.localRotation = localSpace.position() && localSpace.rotation();
+            this.localVelocity = localSpace.velocity();
         } else {
             this.localPosition = false;
             this.localRotation = false;
+            this.localVelocity = false;
         }
 
         // 计算发射器生命周期

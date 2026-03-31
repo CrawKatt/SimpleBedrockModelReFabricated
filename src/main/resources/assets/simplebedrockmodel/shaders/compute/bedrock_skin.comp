@@ -1,0 +1,149 @@
+#version 430
+
+layout(local_size_x = 64) in;
+
+// ---- Source vertex (bind pose, read-only) ----
+struct SourceVertex {
+    vec4 localPos_boneIndex;   // xyz = local position, w = intBitsToFloat(boneIndex)
+    vec4 localNormal_flags;    // xyz = local normal,   w = intBitsToFloat(flags: bit0=fullBright)
+    vec2 uv;
+};
+
+layout(std430, binding = 0) readonly buffer SourceBuffer {
+    SourceVertex srcVertices[];
+};
+
+// ---- Bone palette ----
+struct BoneData {
+    mat4 transform;           // 4x4 global transform
+    vec4 normalCol0;          // mat3 normal transform, column 0 (xyz)
+    vec4 normalCol1;          // mat3 normal transform, column 1 (xyz)
+    vec4 normalCol2;          // mat3 normal transform, column 2 (xyz)
+    vec4 flags;               // x = visible (1.0 or 0.0)
+};
+
+layout(std430, binding = 1) readonly buffer PaletteBuffer {
+    BoneData bones[];
+};
+
+// ---- Instance params ----
+struct InstanceParams {
+    mat4 poseMatrix;          // PoseStack model transform
+    vec4 normalCol0;          // PoseStack normal transform, column 0
+    vec4 normalCol1;          // PoseStack normal transform, column 1
+    vec4 normalCol2;          // PoseStack normal transform, column 2
+    vec4 lightOverlay;        // x = packed light (as float bits), y = packed overlay (as float bits)
+    vec4 rgba;                // r, g, b, a
+    vec4 uvRemap;             // x = u_offset, y = v_offset, z = u_scale, w = v_scale
+};
+
+layout(std430, binding = 2) readonly buffer InstanceBuffer {
+    InstanceParams instance;
+};
+
+// ---- Output: NEW_ENTITY format vertex (9 x uint32 = 36 bytes) ----
+// We write raw uint32 words to match DefaultVertexFormat.NEW_ENTITY layout.
+layout(std430, binding = 3) writeonly buffer DrawBuffer {
+    uint drawVertices[];
+};
+
+// ---- Helpers ----
+
+// Pack a normalized float [-1,1] to a signed byte, then store as part of a uint
+uint packNormalByte(float n) {
+    int b = int(clamp(n, -1.0, 1.0) * 127.0);
+    return uint(b) & 0xFFu;
+}
+
+uint packColor(vec4 c) {
+    uint r = uint(clamp(c.r * 255.0, 0.0, 255.0));
+    uint g = uint(clamp(c.g * 255.0, 0.0, 255.0));
+    uint b = uint(clamp(c.b * 255.0, 0.0, 255.0));
+    uint a = uint(clamp(c.a * 255.0, 0.0, 255.0));
+    return r | (g << 8u) | (b << 16u) | (a << 24u);
+}
+
+void main() {
+    uint gid = gl_GlobalInvocationID.x;
+    if (gid >= srcVertices.length()) return;
+
+    SourceVertex src = srcVertices[gid];
+
+    // Decode bone index and flags
+    int boneIdx = floatBitsToInt(src.localPos_boneIndex.w);
+    int flags   = floatBitsToInt(src.localNormal_flags.w);
+    bool fullBright = (flags & 1) != 0;
+
+    vec3 localPos    = src.localPos_boneIndex.xyz;
+    vec3 localNormal = src.localNormal_flags.xyz;
+    vec2 uv          = src.uv;
+
+    // Fetch bone data
+    BoneData bone = bones[boneIdx];
+    bool visible = bone.flags.x > 0.5;
+
+    vec3 skinnedPos;
+    vec3 skinnedNormal;
+
+    if (!visible) {
+        // Degenerate vertex: collapse to origin so no pixels are produced
+        skinnedPos = vec3(0.0);
+        skinnedNormal = vec3(0.0, 0.0, 1.0);
+    } else {
+        // Apply bone transform
+        vec4 worldPos4 = bone.transform * vec4(localPos, 1.0);
+        skinnedPos = worldPos4.xyz;
+
+        mat3 boneNormal = mat3(bone.normalCol0.xyz, bone.normalCol1.xyz, bone.normalCol2.xyz);
+        skinnedNormal = normalize(boneNormal * localNormal);
+    }
+
+    // Apply PoseStack model transform
+    vec4 finalPos4 = instance.poseMatrix * vec4(skinnedPos, 1.0);
+    vec3 finalPos = finalPos4.xyz;
+
+    mat3 poseNormal = mat3(instance.normalCol0.xyz, instance.normalCol1.xyz, instance.normalCol2.xyz);
+    vec3 finalNormal = normalize(poseNormal * skinnedNormal);
+
+    // UV remap (for Material/atlas sprite)
+    vec2 finalUV = uv * instance.uvRemap.zw + instance.uvRemap.xy;
+
+    // Light and overlay
+    uint packedLight   = floatBitsToUint(instance.lightOverlay.x);
+    uint packedOverlay = floatBitsToUint(instance.lightOverlay.y);
+
+    // Override light for fullBright vertices
+    if (fullBright) {
+        packedLight = 0x00F000F0u; // LightTexture.pack(15, 15)
+    }
+
+    // Color
+    vec4 color = instance.rgba;
+
+    // ---- Write 9 uint32 words in NEW_ENTITY layout ----
+    uint base = gid * 9u;
+
+    // word 0-2: position (float)
+    drawVertices[base + 0u] = floatBitsToUint(finalPos.x);
+    drawVertices[base + 1u] = floatBitsToUint(finalPos.y);
+    drawVertices[base + 2u] = floatBitsToUint(finalPos.z);
+
+    // word 3: color RGBA8
+    drawVertices[base + 3u] = packColor(color);
+
+    // word 4-5: UV (float)
+    drawVertices[base + 4u] = floatBitsToUint(finalUV.x);
+    drawVertices[base + 5u] = floatBitsToUint(finalUV.y);
+
+    // word 6: overlay (packed short/short)
+    drawVertices[base + 6u] = packedOverlay;
+
+    // word 7: light (packed short/short)
+    drawVertices[base + 7u] = packedLight;
+
+    // word 8: normal (3 packed bytes + pad)
+    uint nx = packNormalByte(finalNormal.x);
+    uint ny = packNormalByte(finalNormal.y);
+    uint nz = packNormalByte(finalNormal.z);
+    drawVertices[base + 8u] = nx | (ny << 8u) | (nz << 16u);
+}

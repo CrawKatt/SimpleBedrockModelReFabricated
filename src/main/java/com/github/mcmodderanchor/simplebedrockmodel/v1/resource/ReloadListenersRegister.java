@@ -1,6 +1,7 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.resource;
 
 import com.github.mcmodderanchor.simplebedrockmodel.SimpleBedrockModel;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.render.backend.BedrockRenderDispatcher;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockAnimationEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockAnimationReloadListenerEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockModelEvent;
@@ -37,6 +38,9 @@ public class ReloadListenersRegister {
             event.registerReloadListener(BedrockModelResourceSet.INSTANCE);
             event.registerReloadListener(BedrockAnimationResourceSet.INSTANCE);
             event.registerReloadListener(ParticleDefinitionLoader.getInstance());
+
+            // 注册 GPU 渲染后端的资源重载回调
+            event2.register(map -> BedrockRenderDispatcher.onResourceReload());
         }
     }
 

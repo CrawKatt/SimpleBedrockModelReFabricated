@@ -22,6 +22,7 @@ public class KnownResources {
     public static final ResourceLocation DEAGLE = registerAnimationAndModel(new ResourceLocation(ExampleModRegister.MOD_ID, "deagle"));
     // Molang 测试动画，复用 TEST 的模型
     public static final ResourceLocation MOLANG_TEST = new ResourceLocation(ExampleModRegister.MOD_ID, "molang_test");
+    public static final ResourceLocation PLAIN_TEST = registerModel(new ResourceLocation(ExampleModRegister.MOD_ID, "plain_test"));
 
     private static ResourceLocation registerAnimationAndModel(ResourceLocation location) {
         ANIMATION_AND_MODEL.add(location);

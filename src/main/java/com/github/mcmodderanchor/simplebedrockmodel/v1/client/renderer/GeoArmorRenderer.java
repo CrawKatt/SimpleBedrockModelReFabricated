@@ -1,6 +1,7 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.model.BedrockArmorModel;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.render.backend.BedrockRenderDispatcher;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockBone;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -120,7 +121,7 @@ public class GeoArmorRenderer extends HumanoidModel {
                                float r, float g, float b, float a) {
         Minecraft mc = Minecraft.getInstance();
         MultiBufferSource bufferSource = mc.renderBuffers().bufferSource();
-        var vertexConsumer = bufferSource.getBuffer(this.getRenderType(this.getTexture()));
+        RenderType renderType = this.getRenderType(this.getTexture());
 
         float partialTick = mc.getFrameTime();
 
@@ -129,7 +130,7 @@ public class GeoArmorRenderer extends HumanoidModel {
             scaleModelForBaby(poseStack, this.livingEntity, partialTick, this.equipmentSlot, this.original);
         }
 
-        model.renderToBuffer(poseStack, vertexConsumer, light, overlay, r, g, b, a);
+        BedrockRenderDispatcher.render(model, poseStack, bufferSource, renderType, light, overlay, r, g, b, a);
         poseStack.popPose();
 
         afterRender(poseStack, buffer, light, overlay, r, g, b, a);

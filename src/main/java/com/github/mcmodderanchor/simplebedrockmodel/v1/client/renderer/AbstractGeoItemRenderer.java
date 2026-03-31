@@ -3,6 +3,7 @@ package com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.animation.IFPAnimationInstance;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.model.PositionableModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.model.SlotModel;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.render.backend.BedrockRenderDispatcher;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.util.RenderDistance;
 import com.maydaymemory.mae.basic.YXZRotationView;
@@ -127,7 +128,7 @@ public abstract class AbstractGeoItemRenderer<M extends BedrockModel>
         M model = modelAndRenderType.getLeft();
         beforeRender(poseStack, ctx, model, stack, partialTicks);
         RenderType renderType = modelAndRenderType.getRight();
-        model.renderToBuffer(poseStack, bufferSource.getBuffer(renderType), light, overlay);
+        BedrockRenderDispatcher.render(model, poseStack, bufferSource, renderType, light, overlay);
         afterRender(poseStack, ctx, model, stack, bufferSource, light, partialTicks);
         poseStack.popPose();
     }

@@ -1,8 +1,8 @@
 package example.client.render.blockentity;
 
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.render.backend.BedrockRenderDispatcher;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockModel;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -25,7 +25,6 @@ public abstract class BedrockModelBlockEntityRenderer<T extends BlockEntity> imp
     @Override
     public void render(@NotNull T blockEntity, float partialTick, @NotNull PoseStack poseStack,
                        @NotNull MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        VertexConsumer buffer = getMaterial().buffer(bufferSource, this::getRenderType);
         BlockState blockState = blockEntity.getBlockState();
 
         poseStack.pushPose();
@@ -34,7 +33,8 @@ public abstract class BedrockModelBlockEntityRenderer<T extends BlockEntity> imp
             Direction facing = blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
             poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
         }
-        getModel().renderToBuffer(poseStack, buffer, packedLight, packedOverlay);
+        BedrockRenderDispatcher.render(getModel(), poseStack, bufferSource,
+                getMaterial(), this::getRenderType, packedLight, packedOverlay);
         poseStack.popPose();
     }
 }

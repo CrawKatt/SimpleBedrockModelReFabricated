@@ -5,6 +5,7 @@ import example.block.blockentity.TestBlockEntity;
 import example.entity.Zti;
 import example.item.ExampleArmorItem;
 import example.item.DeagleItem;
+import example.item.PlainTestItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -36,6 +37,7 @@ public class ExampleModRegister {
     public static EntityType<Zti> ZTI_ENTITY_TYPE;
     public static BlockItem TEST_BLOCK_ITEM;
     public static DeagleItem DEAGLE_ITEM;
+    public static PlainTestItem PLAIN_TEST_ITEM;
 
     public static ExampleArmorItem DEFENDER_ARMOR_HELMET;
     public static ExampleArmorItem DEFENDER_ARMOR_CHESTPLATE;
@@ -69,6 +71,7 @@ public class ExampleModRegister {
         if (ForgeRegistries.ITEMS.equals(registry)) {
             TEST_BLOCK_ITEM = new BlockItem(TEST_BLOCK, new BlockItem.Properties());
             DEAGLE_ITEM = new DeagleItem();
+            PLAIN_TEST_ITEM = new PlainTestItem();
             DEFENDER_ARMOR_HELMET = new ExampleArmorItem(ArmorItem.Type.HELMET);
             DEFENDER_ARMOR_CHESTPLATE = new ExampleArmorItem(ArmorItem.Type.CHESTPLATE);
             DEFENDER_ARMOR_LEGGINGS = new ExampleArmorItem(ArmorItem.Type.LEGGINGS);
@@ -76,6 +79,7 @@ public class ExampleModRegister {
             ZTI_SPAWN_EGG = new ForgeSpawnEggItem(() -> ZTI_ENTITY_TYPE, 0x61554D, 0xD8B076, new Item.Properties());
             event.register(ForgeRegistries.ITEMS.getRegistryKey(), modLoc("test_block_item"), () -> TEST_BLOCK_ITEM);
             event.register(ForgeRegistries.ITEMS.getRegistryKey(), modLoc("deagle"), () -> DEAGLE_ITEM);
+            event.register(ForgeRegistries.ITEMS.getRegistryKey(), modLoc("plain_test"), () -> PLAIN_TEST_ITEM);
 
             event.register(ForgeRegistries.ITEMS.getRegistryKey(), modLoc("defender_helmet"), () -> DEFENDER_ARMOR_HELMET);
             event.register(ForgeRegistries.ITEMS.getRegistryKey(), modLoc("defender_chestplate"), () -> DEFENDER_ARMOR_CHESTPLATE);
@@ -91,6 +95,7 @@ public class ExampleModRegister {
                     .displayItems((parameters, output) -> {
                         output.accept(TEST_BLOCK_ITEM);
                         output.accept(DEAGLE_ITEM);
+                        output.accept(PLAIN_TEST_ITEM);
                         output.accept(DEFENDER_ARMOR_HELMET);
                         output.accept(DEFENDER_ARMOR_CHESTPLATE);
                         output.accept(DEFENDER_ARMOR_LEGGINGS);

@@ -159,6 +159,10 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
         return boneIndex;
     }
 
+    public BedrockBone getRoot() {
+        return root;
+    }
+
     private void convertPivot(BedrockBone root) {
         // 后序遍历，子节点计算完后计算当前节点
         for (BedrockBone child : root.getChildren()) {
