@@ -13,7 +13,6 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 
@@ -43,6 +42,10 @@ public class FirstPersonRenderHandler {
     @SubscribeEvent
     public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
         // 离开游戏时重置客户端状态
+        reset();
+    }
+
+    public static void reset() {
         realSelectedSlot = -1;
         realMainHand = ItemStack.EMPTY;
         transitioning = false;
