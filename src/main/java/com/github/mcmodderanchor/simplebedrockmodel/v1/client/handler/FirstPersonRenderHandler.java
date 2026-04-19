@@ -42,6 +42,10 @@ public class FirstPersonRenderHandler {
     @SubscribeEvent
     public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
         // 离开游戏时重置客户端状态
+        reset();
+    }
+
+    public static void reset() {
         realSelectedSlot = -1;
         realMainHand = ItemStack.EMPTY;
         transitioning = false;
