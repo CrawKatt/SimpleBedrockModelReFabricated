@@ -53,6 +53,10 @@ public class FirstPersonRenderHandler {
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        reset();
+    }
+
+    public static void reset() {
         realSelectedSlot = -1;
         realMainHand = ItemStack.EMPTY;
         transitioning = false;
@@ -216,9 +220,8 @@ public class FirstPersonRenderHandler {
             return;
         }
 
-
         IFPGeoItemRenderer renderer = optRenderer.get();
-        if (event.getHand() == InteractionHand.MAIN_HAND && renderer.blockOffhandRender()) {
+        if (event.getHand() == InteractionHand.OFF_HAND && renderer.blockOffhandRender()) {
             event.setCanceled(true);
         }
 
