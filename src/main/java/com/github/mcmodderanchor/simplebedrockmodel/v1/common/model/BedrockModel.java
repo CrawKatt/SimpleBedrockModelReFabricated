@@ -135,6 +135,10 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
         return new BedrockCubePerFace(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
     }
 
+    protected BedrockCube createPolyMesh(PolyMeshItem polyMesh, BedrockBone part, float texWidth, float texHeight) {
+        return new BedrockPolyMesh(polyMesh, part, texWidth, texHeight);
+    }
+
     @OnlyIn(Dist.CLIENT)
     @ParametersAreNonnullByDefault
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay) {
@@ -214,6 +218,12 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
             }
             // 塞入 cubes
             part.setLocators(parseLocators(bone, part));
+            if (bone.getPolyMesh() != null) {
+                BedrockCube polyMesh = createPolyMesh(bone.getPolyMesh(), part, texWidth, texHeight);
+                if (polyMesh != null) {
+                    part.cubes.add(polyMesh);
+                }
+            }
             if (bone.getCubes() != null) {
                 for (CubesItem cube : bone.getCubes()) {
                     float[] uv = cube.getUv();
