@@ -16,7 +16,7 @@ import java.util.List;
 public class BedrockPolyMesh implements BedrockCube {
     private static final float INV_BLOCK = 1.0f / 16.0f;
 
-    private final Vertex[] vertices;
+    private final Quad[] quads;
     private final float x;
     private final float y;
     private final float z;
@@ -25,19 +25,19 @@ public class BedrockPolyMesh implements BedrockCube {
     private final float depth;
 
     public BedrockPolyMesh(PolyMeshItem polyMesh, BedrockBone part, float texWidth, float texHeight) {
-        List<Vertex> bakedVertices = new ArrayList<>();
+        List<Quad> bakedQuads = new ArrayList<>();
         float[][] positions = polyMesh.getPositions();
         float[][] normals = polyMesh.getNormals();
         float[][] uvs = polyMesh.getUvs();
         JsonElement polys = polyMesh.getPolys();
 
         if (positions != null && polys != null && !polys.isJsonNull()) {
-            bakePolys(polyMesh, part, texWidth, texHeight, positions, normals, uvs, polys, bakedVertices);
+            bakePolys(polyMesh, part, texWidth, texHeight, positions, normals, uvs, polys, bakedQuads);
         }
 
-        this.vertices = bakedVertices.toArray(Vertex[]::new);
+        this.quads = bakedQuads.toArray(Quad[]::new);
 
-        if (this.vertices.length == 0) {
+        if (this.quads.length == 0) {
             this.x = 0;
             this.y = 0;
             this.z = 0;
@@ -51,13 +51,15 @@ public class BedrockPolyMesh implements BedrockCube {
             float maxX = Float.NEGATIVE_INFINITY;
             float maxY = Float.NEGATIVE_INFINITY;
             float maxZ = Float.NEGATIVE_INFINITY;
-            for (Vertex vertex : this.vertices) {
-                minX = Math.min(minX, vertex.x);
-                minY = Math.min(minY, vertex.y);
-                minZ = Math.min(minZ, vertex.z);
-                maxX = Math.max(maxX, vertex.x);
-                maxY = Math.max(maxY, vertex.y);
-                maxZ = Math.max(maxZ, vertex.z);
+            for (Quad quad : this.quads) {
+                for (Vertex vertex : quad.vertices) {
+                    minX = Math.min(minX, vertex.x);
+                    minY = Math.min(minY, vertex.y);
+                    minZ = Math.min(minZ, vertex.z);
+                    maxX = Math.max(maxX, vertex.x);
+                    maxY = Math.max(maxY, vertex.y);
+                    maxZ = Math.max(maxZ, vertex.z);
+                }
             }
             this.x = minX;
             this.y = minY;
@@ -69,39 +71,39 @@ public class BedrockPolyMesh implements BedrockCube {
     }
 
     private void bakePolys(PolyMeshItem polyMesh, BedrockBone part, float texWidth, float texHeight, float[][] positions, float[][] normals,
-                           float[][] uvs, JsonElement polys, List<Vertex> bakedVertices) {
+                           float[][] uvs, JsonElement polys, List<Quad> bakedQuads) {
         if (polys.isJsonPrimitive()) {
             JsonPrimitive primitive = polys.getAsJsonPrimitive();
             if (primitive.isString()) {
                 String mode = primitive.getAsString();
                 if ("tri_list".equals(mode)) {
-                    bakeListMode(polyMesh, part, texWidth, texHeight, positions, normals, uvs, bakedVertices, 3);
+                    bakeListMode(polyMesh, part, texWidth, texHeight, positions, normals, uvs, bakedQuads, 3);
                 } else if ("quad_list".equals(mode)) {
-                    bakeListMode(polyMesh, part, texWidth, texHeight, positions, normals, uvs, bakedVertices, 4);
+                    bakeListMode(polyMesh, part, texWidth, texHeight, positions, normals, uvs, bakedQuads, 4);
                 }
             }
         } else if (polys.isJsonArray()) {
             for (JsonElement polyElement : polys.getAsJsonArray()) {
                 if (polyElement != null && polyElement.isJsonArray()) {
-                    bakeIndexedPolygon(polyMesh, part, texWidth, texHeight, positions, normals, uvs, polyElement.getAsJsonArray(), bakedVertices);
+                    bakeIndexedPolygon(polyMesh, part, texWidth, texHeight, positions, normals, uvs, polyElement.getAsJsonArray(), bakedQuads);
                 }
             }
         }
     }
 
     private void bakeListMode(PolyMeshItem polyMesh, BedrockBone part, float texWidth, float texHeight, float[][] positions, float[][] normals,
-                              float[][] uvs, List<Vertex> bakedVertices, int stride) {
+                              float[][] uvs, List<Quad> bakedQuads, int stride) {
         for (int i = 0; i + stride - 1 < positions.length; i += stride) {
             List<Vertex> polygon = new ArrayList<>(stride);
             for (int j = 0; j < stride; j++) {
                 polygon.add(createVertex(polyMesh, part, texWidth, texHeight, positions, normals, uvs, i + j, i + j, i + j));
             }
-            triangulate(polygon, bakedVertices);
+            bakePolygon(polygon, bakedQuads);
         }
     }
 
     private void bakeIndexedPolygon(PolyMeshItem polyMesh, BedrockBone part, float texWidth, float texHeight, float[][] positions, float[][] normals,
-                                    float[][] uvs, JsonArray poly, List<Vertex> bakedVertices) {
+                                    float[][] uvs, JsonArray poly, List<Quad> bakedQuads) {
         List<Vertex> polygon = new ArrayList<>(poly.size());
         for (JsonElement vertexElement : poly) {
             if (vertexElement == null || !vertexElement.isJsonArray()) {
@@ -119,7 +121,7 @@ public class BedrockPolyMesh implements BedrockCube {
         if (polygon.size() > 1 && samePosition(polygon.get(0), polygon.get(polygon.size() - 1))) {
             polygon.remove(polygon.size() - 1);
         }
-        triangulate(polygon, bakedVertices);
+        bakePolygon(polygon, bakedQuads);
     }
 
     private int getIndex(JsonArray indices, int index) {
@@ -159,6 +161,7 @@ public class BedrockPolyMesh implements BedrockCube {
                 u = texWidth == 0 ? 0 : u / texWidth;
                 v = texHeight == 0 ? 0 : v / texHeight;
             }
+            v = 1.0f - v;
         }
         return new Vertex(x, y, z, u, v, nx, ny, nz);
     }
@@ -180,32 +183,37 @@ public class BedrockPolyMesh implements BedrockCube {
                 && Math.abs(first.z - second.z) < 1.0E-6f;
     }
 
-    private void triangulate(List<Vertex> polygon, List<Vertex> bakedVertices) {
+    private void bakePolygon(List<Vertex> polygon, List<Quad> bakedQuads) {
         if (polygon.size() < 3) {
             return;
         }
+        if (polygon.size() == 4) {
+            bakeQuad(polygon.get(0), polygon.get(1), polygon.get(2), polygon.get(3), bakedQuads);
+            return;
+        }
         for (int i = 1; i + 1 < polygon.size(); i++) {
-            Vertex a = polygon.get(0);
-            Vertex b = polygon.get(i);
-            Vertex c = polygon.get(i + 1);
-            bakeTriangle(a, c, b, bakedVertices);
+            bakeTriangle(polygon.get(0), polygon.get(i), polygon.get(i + 1), bakedQuads);
         }
     }
 
-    private void bakeTriangle(Vertex a, Vertex b, Vertex c, List<Vertex> bakedVertices) {
-        if (!hasNormal(a) || !hasNormal(b) || !hasNormal(c)) {
-            Vector3f normal = computeNormal(a, b, c);
-            if (!hasNormal(a)) a = a.withNormal(normal);
-            if (!hasNormal(b)) b = b.withNormal(normal);
-            if (!hasNormal(c)) c = c.withNormal(normal);
-        }
-        bakedVertices.add(a);
-        bakedVertices.add(b);
-        bakedVertices.add(c);
+    private void bakeTriangle(Vertex a, Vertex b, Vertex c, List<Quad> bakedQuads) {
+        Vector3f normal = computeNormal(a, b, c);
+        bakedQuads.add(new Quad(a.withNormal(normal), b.withNormal(normal), c.withNormal(normal), c.withNormal(normal)));
     }
 
-    private boolean hasNormal(Vertex vertex) {
-        return Math.abs(vertex.nx) > 1.0E-6f || Math.abs(vertex.ny) > 1.0E-6f || Math.abs(vertex.nz) > 1.0E-6f;
+    private void bakeQuad(Vertex a, Vertex b, Vertex c, Vertex d, List<Quad> bakedQuads) {
+        Vector3f normal = computeQuadNormal(a, b, c, d);
+        bakedQuads.add(new Quad(a.withNormal(normal), b.withNormal(normal), c.withNormal(normal), d.withNormal(normal)));
+    }
+
+    private Vector3f computeQuadNormal(Vertex a, Vertex b, Vertex c, Vertex d) {
+        Vector3f first = computeNormal(a, b, c);
+        Vector3f second = computeNormal(a, c, d);
+        Vector3f normal = first.add(second, new Vector3f());
+        if (normal.lengthSquared() < 1.0E-12f) {
+            return first;
+        }
+        return normal.normalize();
     }
 
     private Vector3f computeNormal(Vertex a, Vertex b, Vertex c) {
@@ -224,14 +232,24 @@ public class BedrockPolyMesh implements BedrockCube {
     public void compile(PoseStack.Pose pose, Vector3f[] normals, VertexConsumer consumer, int lightmap, int overlay, float red, float green, float blue, float alpha) {
         Matrix4f positionMatrix = pose.pose();
         Matrix3f normalMatrix = pose.normal();
-        for (Vertex vertex : vertices) {
-            Vector3f position = new Vector3f(vertex.x, vertex.y, vertex.z).mulPosition(positionMatrix);
-            Vector3f normal = new Vector3f(vertex.nx, vertex.ny, vertex.nz).mul(normalMatrix);
-            if (normal.lengthSquared() > 1.0E-12f) {
-                normal.normalize();
+        for (Quad quad : quads) {
+            for (Vertex vertex : quad.vertices) {
+                emit(consumer, transform(vertex, positionMatrix, normalMatrix), red, green, blue, alpha, overlay, lightmap);
             }
-            consumer.vertex(position.x, position.y, position.z, red, green, blue, alpha, vertex.u, vertex.v, overlay, lightmap, normal.x, normal.y, normal.z);
         }
+    }
+
+    private TransformedVertex transform(Vertex vertex, Matrix4f positionMatrix, Matrix3f normalMatrix) {
+        Vector3f position = new Vector3f(vertex.x, vertex.y, vertex.z).mulPosition(positionMatrix);
+        Vector3f normal = new Vector3f(vertex.nx, vertex.ny, vertex.nz).mul(normalMatrix);
+        if (normal.lengthSquared() > 1.0E-12f) {
+            normal.normalize();
+        }
+        return new TransformedVertex(position.x, position.y, position.z, vertex.u, vertex.v, normal.x, normal.y, normal.z);
+    }
+
+    private void emit(VertexConsumer consumer, TransformedVertex vertex, float red, float green, float blue, float alpha, int overlay, int lightmap) {
+        consumer.vertex(vertex.x, vertex.y, vertex.z, red, green, blue, alpha, vertex.u, vertex.v, overlay, lightmap, vertex.nx, vertex.ny, vertex.nz);
     }
 
     @Override
@@ -273,5 +291,17 @@ public class BedrockPolyMesh implements BedrockCube {
         private Vertex withNormal(Vector3f normal) {
             return new Vertex(x, y, z, u, v, normal.x, normal.y, normal.z);
         }
+
+    }
+
+    private static class Quad {
+        private final Vertex[] vertices;
+
+        private Quad(Vertex a, Vertex b, Vertex c, Vertex d) {
+            this.vertices = new Vertex[]{a, b, c, d};
+        }
+    }
+
+    private record TransformedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) {
     }
 }
