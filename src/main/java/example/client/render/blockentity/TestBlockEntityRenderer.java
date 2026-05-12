@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 
 public class TestBlockEntityRenderer extends BedrockModelBlockEntityRenderer<TestBlockEntity> {
     private static final Material TEST_MATERIAL = new Material(InventoryMenu.BLOCK_ATLAS, ExampleModRegister.modLoc("block/test"));
-    private static final Material POLY_MESH_TEST_MATERIAL = new Material(InventoryMenu.BLOCK_ATLAS, ExampleModRegister.modLoc("block/poly_mesh"));
+    private static final Material POLY_MESH_TEST_MATERIAL = new Material(InventoryMenu.BLOCK_ATLAS, ExampleModRegister.modLoc("block/vct"));
     private static final EulerAdditiveBlender BLENDER = new SimpleEulerAdditiveBlender(new ZYXBoneTransformFactory(), ArrayPoseBuilder::new);
 
     private final Supplier<BedrockModel> testModelSupplier;
