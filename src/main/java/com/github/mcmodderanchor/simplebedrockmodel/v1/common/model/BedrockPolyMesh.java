@@ -16,7 +16,7 @@ import java.util.List;
 public class BedrockPolyMesh implements BedrockMesh {
     private static final float INV_BLOCK = 1.0f / 16.0f;
 
-    private final Triangle[] triangles;
+    protected final Triangle[] triangles;
     private final float x;
     private final float y;
     private final float z;
@@ -272,7 +272,7 @@ public class BedrockPolyMesh implements BedrockMesh {
     }
 
 
-    private record Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) {
+    protected record Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) {
         private Vertex withFallbackNormal(Vector3f normal) {
             if (nx * nx + ny * ny + nz * nz > 1.0E-12f) {
                 return this;
@@ -282,8 +282,8 @@ public class BedrockPolyMesh implements BedrockMesh {
 
     }
 
-    private static class Triangle {
-        private final Vertex[] vertices;
+    protected static class Triangle {
+        protected final Vertex[] vertices;
 
         private Triangle(Vertex a, Vertex b, Vertex c) {
             this.vertices = new Vertex[]{a, b, c};
