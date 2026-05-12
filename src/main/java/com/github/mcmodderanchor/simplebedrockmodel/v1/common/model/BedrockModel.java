@@ -135,7 +135,7 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
         return new BedrockCubePerFace(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
     }
 
-    protected BedrockCube createPolyMesh(PolyMeshItem polyMesh, BedrockBone part, float texWidth, float texHeight) {
+    protected BedrockMesh createPolyMesh(PolyMeshItem polyMesh, BedrockBone part, float texWidth, float texHeight) {
         return new BedrockPolyMesh(polyMesh, part, texWidth, texHeight);
     }
 
@@ -149,6 +149,19 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
     @ParametersAreNonnullByDefault
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         root.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @ParametersAreNonnullByDefault
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer quadConsumer, VertexConsumer triangleConsumer, int packedLight, int packedOverlay) {
+        root.render(poseStack, quadConsumer, triangleConsumer, packedLight, packedOverlay);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @ParametersAreNonnullByDefault
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer quadConsumer, VertexConsumer triangleConsumer, int packedLight, int packedOverlay,
+                               float red, float green, float blue, float alpha) {
+        root.render(poseStack, quadConsumer, triangleConsumer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
     public AABB getRenderBoundingBox() {
@@ -219,9 +232,9 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
             // 塞入 cubes
             part.setLocators(parseLocators(bone, part));
             if (bone.getPolyMesh() != null) {
-                BedrockCube polyMesh = createPolyMesh(bone.getPolyMesh(), part, texWidth, texHeight);
+                BedrockMesh polyMesh = createPolyMesh(bone.getPolyMesh(), part, texWidth, texHeight);
                 if (polyMesh != null) {
-                    part.cubes.add(polyMesh);
+                    part.meshes.add(polyMesh);
                 }
             }
             if (bone.getCubes() != null) {

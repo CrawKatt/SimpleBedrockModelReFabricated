@@ -35,7 +35,8 @@ minecraft {
         configureEach {
             jvmArgs = [
                     "-XX:+IgnoreUnrecognizedVMOptions",
-                    "-XX:+AllowEnhancedClassRedefinition"
+                    "-XX:+AllowEnhancedClassRedefinition",
+                    "-Dfile.encoding=UTF-8"
             ]
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
@@ -219,4 +220,29 @@ jmh {
 java {
     // 编译源码文件，方便发布 maven
     withSourcesJar()
+}
+
+tasks.register("runWithRenderDoc", Exec) {
+    commandLine = [
+            "D:\\tools\\RenderDoc_1.44_64\\renderdoccmd.exe",
+            "capture",
+            "--opt-hook-children",
+            "--wait-for-exit",
+            "--working-dir",
+            projectDir.absolutePath,
+
+            "C:\\Windows\\System32\\cmd.exe",
+            "/c",
+            file("gradlew.bat").absolutePath,
+            "--no-daemon",
+            "runClient"
+    ]
+
+    doFirst {
+        println "=== RenderDoc gradlew command ==="
+        println commandLine.collect {
+            it.toString().contains(" ") ? "\"${it}\"" : it
+        }.join(" ")
+        println "================================="
+    }
 }

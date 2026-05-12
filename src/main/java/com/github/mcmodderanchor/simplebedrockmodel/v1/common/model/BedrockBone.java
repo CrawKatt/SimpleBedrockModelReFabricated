@@ -30,6 +30,7 @@ public class BedrockBone {
     }
 
     public final ObjectList<BedrockCube> cubes = new ObjectArrayList<>();
+    public final ObjectList<BedrockMesh> meshes = new ObjectArrayList<>();
     private final ObjectList<BedrockBone> children = new ObjectArrayList<>();
     public BedrockBone parent;
     public int index = -1;
@@ -78,6 +79,40 @@ public class BedrockBone {
         }
     }
 
+    @OnlyIn(Dist.CLIENT)
+    public void render(PoseStack poseStack, VertexConsumer quadConsumer, VertexConsumer triangleConsumer, int lightmap, int overlay) {
+        this.render(poseStack, quadConsumer, triangleConsumer, lightmap, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public void render(PoseStack poseStack, VertexConsumer quadConsumer, VertexConsumer triangleConsumer, int lightmap, int overlay,
+                       float red, float green, float blue, float alpha) {
+        int cubePackedLight = illuminated ? ClientConstants.MAX_LIGHT_TEXTURE : lightmap;
+        if (this.visible) {
+            // 缩放过小时，直接退出渲染
+            boolean xNearZero = -1E-5F < xScale && xScale < 1E-5F;
+            boolean yNearZero = -1E-5F < yScale && yScale < 1E-5F;
+            boolean zNearZero = -1E-5F < zScale && zScale < 1E-5F;
+            if ((xNearZero && yNearZero) || (xNearZero && zNearZero) || (yNearZero && zNearZero)) {
+                return;
+            }
+
+            if (!this.cubes.isEmpty() || !this.meshes.isEmpty() || !this.children.isEmpty()) {
+                poseStack.pushPose();
+                this.translateAndRotateAndScale(poseStack);
+                PoseStack.Pose pose = poseStack.last();
+                this.compile(pose, quadConsumer, cubePackedLight, overlay, red, green, blue, alpha);
+                this.compileMeshes(pose, triangleConsumer, cubePackedLight, overlay, red, green, blue, alpha);
+
+                for (BedrockBone part : this.children) {
+                    part.render(poseStack, quadConsumer, triangleConsumer, cubePackedLight, overlay, red, green, blue, alpha);
+                }
+
+                poseStack.popPose();
+            }
+        }
+    }
+
     public void translateAndRotateAndScale(PoseStack poseStack) {
         poseStack.translate(this.x / 16.0F, this.y / 16.0F, this.z / 16.0F);
         poseStack.last().pose().rotate(rotation);
@@ -102,6 +137,13 @@ public class BedrockBone {
         }
     }
 
+    @OnlyIn(Dist.CLIENT)
+    private void compileMeshes(PoseStack.Pose pose, VertexConsumer consumer, int lightmap, int overlay, float red, float green, float blue, float alpha) {
+        for (BedrockMesh mesh : this.meshes) {
+            mesh.compileTriangles(pose, consumer, lightmap, overlay, red, green, blue, alpha);
+        }
+    }
+
     public BoneTransform getBoneTransform() {
         return new BoneTransform(index, new Vector3f(x, y, z), new ZYXRotationView(rotation), new Vector3f(xScale, yScale, zScale));
     }
@@ -119,7 +161,7 @@ public class BedrockBone {
     }
 
     public boolean isEmpty() {
-        return this.cubes.isEmpty();
+        return this.cubes.isEmpty() && this.meshes.isEmpty() && this.children.isEmpty();
     }
 
     public void addChild(BedrockBone model) {

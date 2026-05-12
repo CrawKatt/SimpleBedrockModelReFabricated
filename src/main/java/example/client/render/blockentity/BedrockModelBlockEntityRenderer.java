@@ -1,5 +1,6 @@
 package example.client.render.blockentity;
 
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.BedrockModelRenderTypes;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockModel;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -22,10 +23,16 @@ public abstract class BedrockModelBlockEntityRenderer<T extends BlockEntity> imp
 
     protected abstract RenderType getRenderType(ResourceLocation textureLocation);
 
+    protected RenderType getPolyMeshRenderType(ResourceLocation textureLocation) {
+        return BedrockModelRenderTypes.polyMeshCutout(textureLocation);
+    }
+
     @Override
     public void render(@NotNull T blockEntity, float partialTick, @NotNull PoseStack poseStack,
                        @NotNull MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        VertexConsumer buffer = getMaterial().buffer(bufferSource, this::getRenderType);
+        Material material = getMaterial();
+        VertexConsumer quadBuffer = material.sprite().wrap(bufferSource.getBuffer(getRenderType(material.atlasLocation())));
+        VertexConsumer triangleBuffer = material.sprite().wrap(bufferSource.getBuffer(getPolyMeshRenderType(material.atlasLocation())));
         BlockState blockState = blockEntity.getBlockState();
 
         poseStack.pushPose();
@@ -34,7 +41,7 @@ public abstract class BedrockModelBlockEntityRenderer<T extends BlockEntity> imp
             Direction facing = blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
             poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
         }
-        getModel().renderToBuffer(poseStack, buffer, packedLight, packedOverlay);
+        getModel().renderToBuffer(poseStack, quadBuffer, triangleBuffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 }
