@@ -1,5 +1,7 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.acceleratedrendering.AcceleratedBedrockBoneCache;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.acceleratedrendering.AcceleratedRenderingCompat;
 import com.maydaymemory.mae.basic.BoneTransform;
 import com.maydaymemory.mae.basic.ZYXRotationView;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -47,6 +49,8 @@ public class BedrockBone {
     public boolean illuminated = false;
     public boolean mirror;
     private Map<String, LocatorData> locators = Map.of();
+    @OnlyIn(Dist.CLIENT)
+    private transient AcceleratedBedrockBoneCache acceleratedCache;
 
     @OnlyIn(Dist.CLIENT)
     public void render(PoseStack poseStack, VertexConsumer consumer, int lightmap, int overlay) {
@@ -68,7 +72,10 @@ public class BedrockBone {
             if (!this.cubes.isEmpty() || !this.children.isEmpty()) {
                 poseStack.pushPose();
                 this.translateAndRotateAndScale(poseStack);
-                this.compile(poseStack.last(), consumer, cubePackedLight, overlay, red, green, blue, alpha);
+                PoseStack.Pose pose = poseStack.last();
+                if (!AcceleratedRenderingCompat.renderCubes(this, getAcceleratedCache(), pose, consumer, cubePackedLight, overlay, red, green, blue, alpha)) {
+                    this.compile(pose, consumer, cubePackedLight, overlay, red, green, blue, alpha);
+                }
 
                 for (BedrockBone part : this.children) {
                     part.render(poseStack, consumer, cubePackedLight, overlay, red, green, blue, alpha);
@@ -101,8 +108,13 @@ public class BedrockBone {
                 poseStack.pushPose();
                 this.translateAndRotateAndScale(poseStack);
                 PoseStack.Pose pose = poseStack.last();
-                this.compile(pose, quadConsumer, cubePackedLight, overlay, red, green, blue, alpha);
-                this.compileMeshes(pose, triangleConsumer, cubePackedLight, overlay, red, green, blue, alpha);
+                AcceleratedBedrockBoneCache cache = getAcceleratedCache();
+                if (!AcceleratedRenderingCompat.renderCubes(this, cache, pose, quadConsumer, cubePackedLight, overlay, red, green, blue, alpha)) {
+                    this.compile(pose, quadConsumer, cubePackedLight, overlay, red, green, blue, alpha);
+                }
+                if (!AcceleratedRenderingCompat.renderMeshes(this, cache, pose, triangleConsumer, cubePackedLight, overlay, red, green, blue, alpha)) {
+                    this.compileMeshes(pose, triangleConsumer, cubePackedLight, overlay, red, green, blue, alpha);
+                }
 
                 for (BedrockBone part : this.children) {
                     part.render(poseStack, quadConsumer, triangleConsumer, cubePackedLight, overlay, red, green, blue, alpha);
@@ -121,6 +133,14 @@ public class BedrockBone {
             poseStack.last().pose().scale(this.xScale, this.yScale, this.zScale);
             poseStack.last().normal().scale(this.xScale, this.yScale, this.zScale);
         }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private AcceleratedBedrockBoneCache getAcceleratedCache() {
+        if (acceleratedCache == null) {
+            acceleratedCache = new AcceleratedBedrockBoneCache();
+        }
+        return acceleratedCache;
     }
 
     @OnlyIn(Dist.CLIENT)

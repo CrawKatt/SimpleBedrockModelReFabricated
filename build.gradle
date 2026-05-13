@@ -124,6 +124,9 @@ dependencies {
 //        jarJar.ranged(it, "[3.30.2-GA,)")
 //    }
 
+    compileOnly fg.deobf("maven.modrinth:acceleratedrendering:1.0.8-1.20.1-alpha")
+    runtimeOnly fg.deobf("curse.maven:configured-457570:5180900")
+
     // 测试用mod
     compileOnly fg.deobf("curse.maven:epic-fight-mod-405076:7316952")
     runtimeOnly fg.deobf("curse.maven:playeranimator-658587:4587214")

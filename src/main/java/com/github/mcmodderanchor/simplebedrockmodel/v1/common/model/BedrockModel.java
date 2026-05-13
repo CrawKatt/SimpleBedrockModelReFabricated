@@ -1,6 +1,7 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium.SodiumCompat;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.BedrockModelRenderTypes;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.BoneIndexProvider;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.*;
 import com.google.common.collect.Collections2;
@@ -154,6 +155,14 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
         root.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
+    /**
+     * 同时渲染poly_mesh和cube的入口
+     * @param poseStack
+     * @param quadConsumer
+     * @param triangleConsumer 用于渲染mesh。需要VertexFormat.Mode为TRIANGLES，参见{@link BedrockModelRenderTypes}
+     * @param packedLight
+     * @param packedOverlay
+     */
     @OnlyIn(Dist.CLIENT)
     @ParametersAreNonnullByDefault
     public void renderToBuffer(PoseStack poseStack, VertexConsumer quadConsumer, VertexConsumer triangleConsumer, int packedLight, int packedOverlay) {
