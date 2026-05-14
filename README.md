@@ -25,21 +25,25 @@ Add SimpleBedrockModel to your mod's dependencies:
 ```groovy
 repositories {
     maven {
-        url = "https://api.modrinth.com/maven"
+        url 'https://jitpack.io'
         content {
-            includeGroup "maven.modrinth"
+            includeGroup "com.github.mcmodderanchor"
         }
     }
 }
 
 dependencies {
-    jarJar(implementation(fg.deobf("maven.modrinth:simplebedrockmodel:1.5.0-forge+1.20.1"))) {
-        jarJar.ranged(it, "[1.5.0,)")
+    jarJar(implementation(fg.deobf("com.github.mcmodderanchor:simplebedrockmodel:2.2.2-forge-mc1.20.1"))) {
+        jarJar.ranged(it, "[2.2.2,)")
     }
     // The animation library is already included in jar (jar in jar), 
     // but since modrinth maven cannot handle transitive dependencies,
     // you need to include it to pass the compilation.
-    compileOnly("com.maydaymemory:mae:1.0.2")
+    compileOnly("com.maydaymemory:mae:1.1.2") {
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'it.unimi.dsi', module: 'fastutil'
+        exclude group: 'org.joml', module: 'joml'
+    }
 }
 ```
 
@@ -47,23 +51,27 @@ dependencies {
 ```groovy
 repositories {
     maven {
-        url = "https://api.modrinth.com/maven"
+        url 'https://jitpack.io'
         content {
-            includeGroup "maven.modrinth"
+            includeGroup "com.github.mcmodderanchor"
         }
     }
 }
 
 dependencies {
-    implementation jarJar("maven.modrinth:simplebedrockmodel:1.5.0-neoforge+mc1.21.1") {
+    implementation jarJar("com.github.mcmodderanchor:simplebedrockmodel:2.2.2-neoforge-mc1.21.1") {
         version {
-            prefer '1.5.0-neoforge+1.21.1'
+            prefer '2.2.2'
         }
     }
     // The animation library is already included in jar (jar in jar), 
     // but since modrinth maven cannot handle transitive dependencies,
     // you need to include it to pass the compilation.
-    compileOnly("com.maydaymemory:mae:1.0.2")
+    compileOnly("com.maydaymemory:mae:1.1.2") {
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'it.unimi.dsi', module: 'fastutil'
+        exclude group: 'org.joml', module: 'joml'
+    }
 }
 ```
 
