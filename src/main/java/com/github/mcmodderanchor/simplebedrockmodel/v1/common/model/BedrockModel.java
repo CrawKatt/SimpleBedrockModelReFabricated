@@ -139,9 +139,10 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
     }
 
     protected BedrockMesh createPolyMesh(PolyMeshItem polyMesh, BedrockBone part, float texWidth, float texHeight) {
-        if (SodiumCompat.isSodiumInstalled()) {
-            return new SodiumBedrockPolyMesh(polyMesh, part, texWidth, texHeight);
-        }
+        // 这东西有问题，先不用它了
+//        if (SodiumCompat.isSodiumInstalled()) {
+//            return new SodiumBedrockPolyMesh(polyMesh, part, texWidth, texHeight);
+//        }
         return new BedrockPolyMesh(polyMesh, part, texWidth, texHeight);
     }
 
