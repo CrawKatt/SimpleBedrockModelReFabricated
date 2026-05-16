@@ -9,6 +9,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,12 +18,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(HeldItemRenderer.class)
 public abstract class HeldItemRendererRenderMixin {
+    @Unique
+    private boolean sbm$skipOffhandThisFrame;
+
     @Inject(
             method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/network/ClientPlayerEntity;I)V",
             at = @At("HEAD")
     )
     private void sbm$beforeRenderHands(float tickProgress, MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers,
                                        ClientPlayerEntity player, int light, CallbackInfo ci) {
+        this.sbm$skipOffhandThisFrame = false;
         SimpleBedrockModelEvents.BEFORE_RENDER_HAND.invoker().onBeforeRenderHand(matrices, tickProgress);
     }
 
@@ -37,7 +42,9 @@ public abstract class HeldItemRendererRenderMixin {
     private void sbm$renderMainHand(HeldItemRenderer instance, AbstractClientPlayerEntity player, float tickProgress, float pitch,
                                     Hand hand, float swingProgress, ItemStack stack, float equipProgress, MatrixStack matrices,
                                     VertexConsumerProvider vertexConsumers, int light) {
-        if (!SimpleBedrockModelEvents.RENDER_HAND.invoker().onRenderHand(hand, stack, matrices, vertexConsumers, light, tickProgress)) {
+        boolean handled = SimpleBedrockModelEvents.RENDER_HAND.invoker().onRenderHand(hand, stack, matrices, vertexConsumers, light, tickProgress);
+        this.sbm$skipOffhandThisFrame = handled;
+        if (!handled) {
             this.sbm$callVanillaRenderFirstPersonItem(player, tickProgress, pitch, hand, swingProgress, stack, equipProgress, matrices, vertexConsumers, light);
         }
     }
@@ -53,6 +60,10 @@ public abstract class HeldItemRendererRenderMixin {
     private void sbm$renderOffHand(HeldItemRenderer instance, AbstractClientPlayerEntity player, float tickProgress, float pitch,
                                    Hand hand, float swingProgress, ItemStack stack, float equipProgress, MatrixStack matrices,
                                    VertexConsumerProvider vertexConsumers, int light) {
+        if (this.sbm$skipOffhandThisFrame) {
+            return;
+        }
+
         if (!SimpleBedrockModelEvents.RENDER_HAND.invoker().onRenderHand(hand, stack, matrices, vertexConsumers, light, tickProgress)) {
             this.sbm$callVanillaRenderFirstPersonItem(player, tickProgress, pitch, hand, swingProgress, stack, equipProgress, matrices, vertexConsumers, light);
         }
