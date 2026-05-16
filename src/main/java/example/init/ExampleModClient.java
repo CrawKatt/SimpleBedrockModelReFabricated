@@ -15,6 +15,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
 public class ExampleModClient implements ClientModInitializer {
     @Override
@@ -36,7 +37,7 @@ public class ExampleModClient implements ClientModInitializer {
         DeagleWithoutLevelRenderer deagleRenderer = new DeagleWithoutLevelRenderer();
         BuiltinItemRendererRegistry.INSTANCE.register(ExampleModRegister.DEAGLE_ITEM, deagleRenderer::render);
 
-        ExampleArmorItem.registerClient();
+        ExampleArmorItem.initializeClient(new RegisterClientExtensionsEvent());
         ClientTicker.register();
     }
 }

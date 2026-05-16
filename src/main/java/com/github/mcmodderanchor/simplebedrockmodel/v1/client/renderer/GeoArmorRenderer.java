@@ -33,7 +33,7 @@ public class GeoArmorRenderer<T extends LivingEntity> extends BipedEntityModel<T
     @Nullable
     protected BipedEntityModel<?> original;
 
-    public GeoArmorRenderer(BedrockArmorModel origin, Identifier texture) {
+    public GeoArmorRenderer(@Nullable BedrockArmorModel origin, Identifier texture) {
         super(MinecraftClient.getInstance().getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_INNER_ARMOR));
         this.model = origin;
         this.texture = texture;
@@ -105,7 +105,7 @@ public class GeoArmorRenderer<T extends LivingEntity> extends BipedEntityModel<T
 
     public void scaleModelForBaby(MatrixStack matrixStack, LivingEntity livingEntity, float partialTick, EquipmentSlot slot,
                                   BipedEntityModel<?> original) {
-        if (!this.child)
+        if (!original.child)
             return;
 
         if (slot == EquipmentSlot.HEAD) {

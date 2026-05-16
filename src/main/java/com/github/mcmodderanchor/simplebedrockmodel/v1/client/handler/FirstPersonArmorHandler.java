@@ -3,7 +3,7 @@ package com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.model.BedrockArmorModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.GeoArmorRenderer;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockBone;
-import com.github.mcmodderanchor.simplebedrockmodel.v1.registry.GeoArmorRendererRegistry;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.registry.ClientItemExtensionsRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
@@ -16,6 +16,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Arm;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
@@ -42,9 +43,12 @@ public class FirstPersonArmorHandler {
         ItemStack chestStack = player.getEquippedStack(EquipmentSlot.CHEST);
         if (chestStack.isEmpty()) return;
 
-        GeoArmorRenderer geoRenderer = GeoArmorRendererRegistry.getRenderer(chestStack);
-        if (geoRenderer == null) return;
-        geoRenderer.preparePose(player, chestStack, EquipmentSlot.CHEST, getDefaultModel());
+        IClientItemExtensions extensions = ClientItemExtensionsRegistry.get(chestStack);
+        if (extensions == null) return;
+
+        if (!(extensions.getHumanoidArmorModel(player, chestStack, EquipmentSlot.CHEST, getDefaultModel()) instanceof GeoArmorRenderer geoRenderer)) {
+            return;
+        }
 
         BedrockArmorModel model = geoRenderer.getModel();
         if (model == null) return;
