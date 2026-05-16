@@ -103,22 +103,24 @@ public class GeoArmorRenderer<T extends LivingEntity> extends BipedEntityModel<T
         }
     }
 
-    public void scaleModelForBaby(MatrixStack poseStack, LivingEntity livingEntity, float partialTick, EquipmentSlot slot,
+    public void scaleModelForBaby(MatrixStack matrixStack, LivingEntity livingEntity, float partialTick, EquipmentSlot slot,
                                   BipedEntityModel<?> original) {
-        // En Yarn, AnimalModel define 'child' en lugar de 'young'
         if (!this.child)
             return;
 
         if (slot == EquipmentSlot.HEAD) {
-            float headScale = 1.5f / 2.0f;
+            if (original.headScaled) {
+                float headScale = 1.5f / original.invertedChildHeadScale;
 
-            poseStack.scale(headScale, headScale, headScale);
-            poseStack.translate(0, 1.0f, 0f);
+                matrixStack.scale(headScale, headScale, headScale);
+            }
+
+            matrixStack.translate(0, original.childHeadYOffset / 16f, original.childHeadZOffset / 16f);
         } else {
-            float bodyScale = 1f / 2.0f;
+            float bodyScale = 1 / original.invertedChildBodyScale;
 
-            poseStack.scale(bodyScale, bodyScale, bodyScale);
-            poseStack.translate(0, 24.0f / 16f, 0);
+            matrixStack.scale(bodyScale, bodyScale, bodyScale);
+            matrixStack.translate(0, original.childBodyYOffset / 16f, 0);
         }
     }
 

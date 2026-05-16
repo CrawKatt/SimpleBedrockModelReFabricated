@@ -1,1 +1,7 @@
 accessWidener v2 named
+accessible field net/minecraft/client/render/entity/model/AnimalModel headScaled Z
+accessible field net/minecraft/client/render/entity/model/AnimalModel invertedChildHeadScale F
+accessible field net/minecraft/client/render/entity/model/AnimalModel childHeadYOffset F
+accessible field net/minecraft/client/render/entity/model/AnimalModel childHeadZOffset F
+accessible field net/minecraft/client/render/entity/model/AnimalModel invertedChildBodyScale F
+accessible field net/minecraft/client/render/entity/model/AnimalModel childBodyYOffset F
