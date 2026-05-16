@@ -8,7 +8,6 @@ import example.animation.GunAnimationGraph;
 import example.capability.FPGunAnimationCapability;
 import example.init.ExampleModRegister;
 import example.resource.KnownResources;
-import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
@@ -17,8 +16,8 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
+import net.minecraft.client.render.item.BuiltinModelItemRenderer;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -28,14 +27,15 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
 
-//@EventBusSubscriber(value = Dist.CLIENT)
-public class DeagleWithoutLevelRenderer implements BuiltinItemRendererRegistry.DynamicItemRenderer {
-    private static final SpriteIdentifier material = new SpriteIdentifier(net.minecraft.screen.PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of(KnownResources.DEAGLE.getNamespace(), "item/" + KnownResources.DEAGLE.getPath()));
+public class DeagleWithoutLevelRenderer extends BuiltinModelItemRenderer {
+    private static final Identifier TEXTURE = Identifier.of(
+            KnownResources.DEAGLE.getNamespace(),
+            "textures/item/" + KnownResources.DEAGLE.getPath() + ".png"
+    );
 
     private static BedrockModel model;
 
     // 暂时只能想到这么丑的办法
-    //@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
     public static class ModelReloadListenerRegister {
         //@SubscribeEvent
         public static void onModelReloadListenerRegister(RegisterBedrockModelReloadListenerEvent event) {
@@ -54,12 +54,17 @@ public class DeagleWithoutLevelRenderer implements BuiltinItemRendererRegistry.D
     }
 
     public DeagleWithoutLevelRenderer() {
-        //super(MinecraftClient.getInstance().getBlockEntityRenderDispatcher(), MinecraftClient.getInstance().getEntityModels());
+        super(MinecraftClient.getInstance().getBlockEntityRenderDispatcher(), MinecraftClient.getInstance().getEntityModelLoader());
     }
 
     public static boolean onFirstPersonRender(Hand hand, ItemStack stack, MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, int packedLight, float partialTick) {
-        if (stack.getItem() == ExampleModRegister.DEAGLE_ITEM && hand == Hand.MAIN_HAND && model != null) {
-            MinecraftClient mc = MinecraftClient.getInstance();
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (stack.getItem() == ExampleModRegister.DEAGLE_ITEM
+                && hand == Hand.MAIN_HAND
+                && model != null
+                && mc.player != null
+                && mc.player.getMainHandStack().isOf(ExampleModRegister.DEAGLE_ITEM))
+        {
             // 从 AnimationInstance 中获取 AnimationGraph，然后计算当前帧的 Pose，然后混合并 apply
             if (mc.getCameraEntity() instanceof PlayerEntity player) {
                 var cap = FPGunAnimationCapability.get(player);
@@ -82,7 +87,7 @@ public class DeagleWithoutLevelRenderer implements BuiltinItemRendererRegistry.D
                 // 这里的 translate 是为了把枪放到合适位置，为了方便直接硬编码了
                 matrixStack.translate(0.125, -0.5, -1.03125);
                 // 执行渲染
-                VertexConsumer buffer = material.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutout);
+                VertexConsumer buffer = vertexConsumers.getBuffer(RenderLayer.getEntityCutout(TEXTURE));
                 model.renderToBuffer(matrixStack, buffer, packedLight, OverlayTexture.DEFAULT_UV);
                 // 渲染手臂
                 if (mc.getCameraEntity() instanceof AbstractClientPlayerEntity abstractClientPlayer) {
@@ -123,7 +128,7 @@ public class DeagleWithoutLevelRenderer implements BuiltinItemRendererRegistry.D
         }
         matrixStack.push();
         matrixStack.translate(0.5, 0, 0.5);
-        VertexConsumer buffer = material.getVertexConsumer(bufferSource, RenderLayer::getEntityCutout);
+        VertexConsumer buffer = bufferSource.getBuffer(RenderLayer.getEntityCutout(TEXTURE));
         model.renderToBuffer(matrixStack, buffer, light, overlay);
         matrixStack.pop();
     }

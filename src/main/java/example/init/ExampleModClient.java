@@ -1,7 +1,6 @@
 package example.init;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.SimpleBedrockModelEvents;
-import com.github.mcmodderanchor.simplebedrockmodel.v1.registry.GeoArmorRendererRegistry;
 import example.animation.DeagleAnimationGraph;
 import example.animation.TestBlockAnimationContext;
 import example.animation.ZtiAnimationContext;
@@ -34,7 +33,8 @@ public class ExampleModClient implements ClientModInitializer {
 
         EntityRendererRegistry.register(ExampleModRegister.ZTI_ENTITY_TYPE, ZtiRenderer::new);
         BlockEntityRendererFactories.register(ExampleModRegister.TEST_BLOCK_ENTITY_TYPE, TestBlockEntityRenderer::new);
-        BuiltinItemRendererRegistry.INSTANCE.register(ExampleModRegister.DEAGLE_ITEM, new DeagleWithoutLevelRenderer());
+        DeagleWithoutLevelRenderer deagleRenderer = new DeagleWithoutLevelRenderer();
+        BuiltinItemRendererRegistry.INSTANCE.register(ExampleModRegister.DEAGLE_ITEM, deagleRenderer::render);
 
         ExampleArmorItem.registerClient();
         ClientTicker.register();
