@@ -5,10 +5,11 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockCubeP
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.FaceItem;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.FaceUVsItem;
 import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 
-public class SlotModel extends EntityModel {
+public class SlotModel extends EntityModel<Entity> {
     private static final FaceItem EMPTY = new FaceItem(new float[]{0f, 0f}, new float[]{0f, 0f});
     private static final FaceItem X16 = new FaceItem(new float[]{0f, 0f}, new float[]{16f, 16f});
     private static final FaceUVsItem SINGLE_SOUTH_X16 = new FaceUVsItem(EMPTY, EMPTY, EMPTY, X16, EMPTY, EMPTY);
@@ -27,6 +28,7 @@ public class SlotModel extends EntityModel {
         this(false);
     }
 
+    @Override
     public void setAngles(
             Entity entity,
             float limbAngle,
@@ -38,7 +40,7 @@ public class SlotModel extends EntityModel {
     }
 
     @Override
-    public void renderToBuffer(MatrixStack matrixStack, VertexConsumer buffer, int packedLight, int packedOverlay) {
+    public void render(MatrixStack matrixStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
         bone.render(matrixStack, buffer, packedLight, packedOverlay);
     }
 }
