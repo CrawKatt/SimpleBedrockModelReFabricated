@@ -21,7 +21,7 @@ public class SoundEffectKeyframesSerializer implements JsonDeserializer<SoundEff
                 double time = Double.parseDouble(entrySet.getKey());
                 JsonElement value = entrySet.getValue();
                 if (value.isJsonObject()) {
-                    String soundId = JsonHelper.asString(value.getAsJsonObject(), "effect");
+                    String soundId = JsonHelper.getString(value.getAsJsonObject(), "effect");
                     keyframes.put(time, Identifier.of(soundId));
                 }
             }
