@@ -1,6 +1,7 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.event;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler.CameraEventHandler;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler.FirstPersonRenderHandler;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockAnimationEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockAnimationReloadListenerEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockModelEvent;
@@ -9,7 +10,10 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
 
 /**
  * Fabric Events for SimpleBedrockModel.
@@ -125,6 +129,21 @@ public final class SimpleBedrockModelEvents {
             EventFactory.createArrayBacked(SwapItemCallback.class,
                     callbacks -> () -> { for (var cb : callbacks) cb.onSwap(); });
 
+    /**
+     * Fires when vanilla is about to render a specific first-person hand.
+     * Return true to signal the hand was handled and vanilla should skip its render path.
+     */
+    public static final Event<RenderHandCallback> RENDER_HAND =
+            EventFactory.createArrayBacked(RenderHandCallback.class,
+                    callbacks -> (hand, stack, matrixStack, vertexConsumers, light, partialTick) -> {
+                        for (var cb : callbacks) {
+                            if (cb.onRenderHand(hand, stack, matrixStack, vertexConsumers, light, partialTick)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+
     // ---- Callback interfaces ----
 
     @FunctionalInterface
@@ -163,12 +182,19 @@ public final class SimpleBedrockModelEvents {
         void onSwap();
     }
 
+    @FunctionalInterface
+    public interface RenderHandCallback {
+        boolean onRenderHand(Hand hand, ItemStack stack, MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, int light, float partialTick);
+    }
+
     /**
      * Called from ClientModInitializer to hook internal rendering handlers into the events.
      */
     public static void registerRenderEventHandlers() {
         BOB_VIEW_ITEM_IN_HAND.register(CameraEventHandler::shouldCancelItemInHandViewBobbing);
         BEFORE_RENDER_HAND.register(CameraEventHandler::onBeforeRenderHands);
+        SWAP_ITEM_WITH_OFFHAND.register(FirstPersonRenderHandler::onSwapItemWithOffhand);
+        RENDER_HAND.register(FirstPersonRenderHandler::onRenderHand);
     }
 
     private SimpleBedrockModelEvents() {}

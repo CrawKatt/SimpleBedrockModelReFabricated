@@ -35,7 +35,7 @@ public abstract class AbstractGeoItemRenderer<M extends BedrockModel>
     private static final SlotModel SLOT_MODEL = new SlotModel();
 
     public AbstractGeoItemRenderer() {
-        super(MinecraftClient.getInstance().getBlockEntityRenderDispatcher(), MinecraftClient.getInstance().getEntityModels());
+        super(MinecraftClient.getInstance().getBlockEntityRenderDispatcher(), MinecraftClient.getInstance().getEntityModelLoader());
     }
 
     @Nullable
@@ -135,7 +135,7 @@ public abstract class AbstractGeoItemRenderer<M extends BedrockModel>
         if (slotTexture != null) {
             poseStack.push();
             poseStack.translate(0.5, 0.5, 0);
-            SLOT_MODEL.renderToBuffer(poseStack, bufferSource.getBuffer(RenderLayer.getEntityTranslucent(slotTexture)), light, overlay, 0xFFFFFFFF);
+            SLOT_MODEL.render(poseStack, bufferSource.getBuffer(RenderLayer.getEntityTranslucent(slotTexture)), light, overlay, 0xFFFFFFFF);
             poseStack.pop();
         } else if (modelAndRenderLayer == null) {
             // 模型和 gui texture 都不存在，渲染 missing texture
@@ -143,7 +143,7 @@ public abstract class AbstractGeoItemRenderer<M extends BedrockModel>
             poseStack.translate(0.5, 0.5, 0);
             // MissingTextureAtlasSprite.getLocation() -> MissingSprite.getMissingSpriteId()
             RenderLayer renderType1 = RenderLayer.getEntityTranslucent(MissingSprite.getMissingSpriteId());
-            SLOT_MODEL.renderToBuffer(poseStack, bufferSource.getBuffer(renderType1), light, overlay, 0xFFFFFFFF);
+            SLOT_MODEL.render(poseStack, bufferSource.getBuffer(renderType1), light, overlay, 0xFFFFFFFF);
             poseStack.pop();
         }
     }

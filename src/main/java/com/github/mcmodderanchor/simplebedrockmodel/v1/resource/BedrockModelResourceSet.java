@@ -1,9 +1,13 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.resource;
 
 import com.github.mcmodderanchor.simplebedrockmodel.SimpleBedrockModel;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.SimpleBedrockModelEvents;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.BedrockModelPOJO;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockModelEvent;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockModelReloadListenerEvent;
 import com.google.common.collect.Maps;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.resource.SimpleResourceReloadListener;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
@@ -13,6 +17,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -20,9 +25,10 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 public class BedrockModelResourceSet implements SimpleResourceReloadListener<Map<Identifier, BedrockModelPOJO>> {
-    private final Map<Identifier, BedrockModelResourceProcessor> processors;
+    private final EnvType envType;
     private final Map<Identifier, BedrockModel> modelCache;
-    private final List<Consumer<Map<Identifier, BedrockModel>>> listeners;
+    private Map<Identifier, BedrockModelResourceProcessor> processors;
+    private List<Consumer<Map<Identifier, BedrockModel>>> listeners;
 
     static BedrockModelResourceSet INSTANCE;
 
@@ -30,10 +36,10 @@ public class BedrockModelResourceSet implements SimpleResourceReloadListener<Map
         return INSTANCE;
     }
 
-    BedrockModelResourceSet(Map<Identifier, BedrockModelResourceProcessor> processors,
-                            List<Consumer<Map<Identifier, BedrockModel>>> listeners) {
-        this.processors = processors;
-        this.listeners = listeners;
+    BedrockModelResourceSet(EnvType envType) {
+        this.envType = envType;
+        this.processors = Collections.emptyMap();
+        this.listeners = Collections.emptyList();
         this.modelCache = Maps.newHashMap();
     }
 
@@ -44,9 +50,13 @@ public class BedrockModelResourceSet implements SimpleResourceReloadListener<Map
 
     @Override
     public CompletableFuture<Map<Identifier, BedrockModelPOJO>> load(ResourceManager resourceManager, Profiler profiler, Executor executor) {
+        RegistrationSnapshot snapshot = collectRegistrations();
+        this.processors = snapshot.processors();
+        this.listeners = snapshot.listeners();
+
         return CompletableFuture.supplyAsync(() -> {
             Map<Identifier, BedrockModelPOJO> pojoMap = Maps.newHashMap();
-            processors.forEach((location, processor) -> {
+            snapshot.processors().forEach((location, processor) -> {
                 Identifier path = Identifier.of(location.getNamespace(), "models/bedrock/" + location.getPath() + ".json");
                 resourceManager.getResource(path).ifPresentOrElse(resource -> {
                     try (InputStream stream = resource.getInputStream()) {
@@ -83,6 +93,24 @@ public class BedrockModelResourceSet implements SimpleResourceReloadListener<Map
         }, executor);
     }
 
+    private RegistrationSnapshot collectRegistrations() {
+        RegisterBedrockModelEvent modelEvent = new RegisterBedrockModelEvent(envType);
+        RegisterBedrockModelReloadListenerEvent modelReloadEvent = new RegisterBedrockModelReloadListenerEvent();
+
+        if (envType == EnvType.CLIENT) {
+            SimpleBedrockModelEvents.REGISTER_CLIENT_MODELS.invoker().onRegister(modelEvent);
+            SimpleBedrockModelEvents.REGISTER_CLIENT_MODEL_RELOAD_LISTENERS.invoker().onRegister(modelReloadEvent);
+        } else {
+            SimpleBedrockModelEvents.REGISTER_SERVER_MODELS.invoker().onRegister(modelEvent);
+            SimpleBedrockModelEvents.REGISTER_SERVER_MODEL_RELOAD_LISTENERS.invoker().onRegister(modelReloadEvent);
+        }
+
+        return new RegistrationSnapshot(
+                new LinkedHashMap<>(modelEvent.getModelRegistry()),
+                List.copyOf(modelReloadEvent.getListeners())
+        );
+    }
+
     public BedrockModel getModel(Identifier location) {
         return modelCache.get(location);
     }
@@ -90,5 +118,9 @@ public class BedrockModelResourceSet implements SimpleResourceReloadListener<Map
     @UnmodifiableView
     public Map<Identifier, BedrockModel> getAllModels() {
         return Collections.unmodifiableMap(modelCache);
+    }
+
+    private record RegistrationSnapshot(Map<Identifier, BedrockModelResourceProcessor> processors,
+                                        List<Consumer<Map<Identifier, BedrockModel>>> listeners) {
     }
 }

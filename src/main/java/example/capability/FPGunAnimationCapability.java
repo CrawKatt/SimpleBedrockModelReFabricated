@@ -1,13 +1,17 @@
 package example.capability;
 
 import example.animation.FPGunAnimationInstance;
+import example.init.ExampleEntityComponents;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.entity.player.PlayerEntity;
+import org.ladysnake.cca.api.v3.component.Component;
 
-public class FPGunAnimationCapability implements IFPGunAnimationCapability{
+public class FPGunAnimationCapability implements Component, IFPGunAnimationCapability {
     private FPGunAnimationInstance animationInstance;
     private int lastSelected = -1;
 
-    public FPGunAnimationCapability() {
+    public FPGunAnimationCapability(PlayerEntity ignoredPlayer) {
     }
 
     public void setPlayer(PlayerEntity player) {
@@ -29,17 +33,22 @@ public class FPGunAnimationCapability implements IFPGunAnimationCapability{
         this.lastSelected = lastSelected;
     }
 
-    /*
     public static FPGunAnimationCapability get(PlayerEntity player) {
-        var data = player.getData(ExampleModRegister.FP_GUN_ANIMATION);
-        if (!data.inited()) {
-            data.setPlayer(player);
-        }
+        FPGunAnimationCapability data = ExampleEntityComponents.FP_GUN_ANIMATION.get(player);
+        data.setPlayer(player);
         return data;
     }
-    */
 
     private boolean inited() {
         return animationInstance != null;
+    }
+
+    @Override
+    public void readFromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
+        this.lastSelected = -1;
+    }
+
+    @Override
+    public void writeToNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
     }
 }

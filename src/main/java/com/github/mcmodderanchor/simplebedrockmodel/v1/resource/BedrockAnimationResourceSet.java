@@ -1,21 +1,25 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.resource;
 
 import com.github.mcmodderanchor.simplebedrockmodel.SimpleBedrockModel;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.SimpleBedrockModelEvents;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.animation.BedrockAnimation;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.BedrockAnimationFile;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockAnimationEvent;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockAnimationReloadListenerEvent;
 import com.google.common.collect.Maps;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.resource.SimpleResourceReloadListener;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -23,9 +27,10 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 public class BedrockAnimationResourceSet implements SimpleResourceReloadListener<Map<Identifier, BedrockAnimationFile>> {
-    private final Map<Identifier, BedrockAnimationResourceProcessor> processors;
-    private final List<Consumer<Map<Identifier, List<BedrockAnimation>>>> listeners;
+    private final EnvType envType;
     private final Map<Identifier, List<BedrockAnimation>> animationCache;
+    private Map<Identifier, BedrockAnimationResourceProcessor> processors;
+    private List<Consumer<Map<Identifier, List<BedrockAnimation>>>> listeners;
 
     static BedrockAnimationResourceSet INSTANCE;
 
@@ -33,10 +38,10 @@ public class BedrockAnimationResourceSet implements SimpleResourceReloadListener
         return INSTANCE;
     }
 
-    BedrockAnimationResourceSet(Map<Identifier, BedrockAnimationResourceProcessor> processors,
-                                List<Consumer<Map<Identifier, List<BedrockAnimation>>>> listeners) {
-        this.processors = processors;
-        this.listeners = listeners;
+    BedrockAnimationResourceSet(EnvType envType) {
+        this.envType = envType;
+        this.processors = Collections.emptyMap();
+        this.listeners = Collections.emptyList();
         this.animationCache = Maps.newHashMap();
     }
 
@@ -47,9 +52,13 @@ public class BedrockAnimationResourceSet implements SimpleResourceReloadListener
 
     @Override
     public CompletableFuture<Map<Identifier, BedrockAnimationFile>> load(ResourceManager resourceManager, Profiler profiler, Executor executor) {
+        RegistrationSnapshot snapshot = collectRegistrations();
+        this.processors = snapshot.processors();
+        this.listeners = snapshot.listeners();
+
         return CompletableFuture.supplyAsync(() -> {
             Map<Identifier, BedrockAnimationFile> pojoMap = new HashMap<>();
-            processors.forEach((location, processor) -> {
+            snapshot.processors().forEach((location, processor) -> {
                 // Identifier.fromNamespaceAndPath -> Identifier.of
                 Identifier path = Identifier.of(location.getNamespace(), "animations/" + location.getPath() + ".json");
                 resourceManager.getResource(path).ifPresentOrElse(resource -> {
@@ -89,6 +98,24 @@ public class BedrockAnimationResourceSet implements SimpleResourceReloadListener
         }, executor);
     }
 
+    private RegistrationSnapshot collectRegistrations() {
+        RegisterBedrockAnimationEvent animEvent = new RegisterBedrockAnimationEvent(envType);
+        RegisterBedrockAnimationReloadListenerEvent animReloadEvent = new RegisterBedrockAnimationReloadListenerEvent();
+
+        if (envType == EnvType.CLIENT) {
+            SimpleBedrockModelEvents.REGISTER_CLIENT_ANIMATIONS.invoker().onRegister(animEvent);
+            SimpleBedrockModelEvents.REGISTER_CLIENT_ANIMATION_RELOAD_LISTENERS.invoker().onRegister(animReloadEvent);
+        } else {
+            SimpleBedrockModelEvents.REGISTER_SERVER_ANIMATIONS.invoker().onRegister(animEvent);
+            SimpleBedrockModelEvents.REGISTER_SERVER_ANIMATION_RELOAD_LISTENERS.invoker().onRegister(animReloadEvent);
+        }
+
+        return new RegistrationSnapshot(
+                new LinkedHashMap<>(animEvent.getAnimationRegistry()),
+                List.copyOf(animReloadEvent.getListeners())
+        );
+    }
+
     public List<BedrockAnimation> getAnimations(Identifier location) {
         return animationCache.get(location);
     }
@@ -96,5 +123,9 @@ public class BedrockAnimationResourceSet implements SimpleResourceReloadListener
     @UnmodifiableView
     public Map<Identifier, List<BedrockAnimation>> getAllAnimations() {
         return Collections.unmodifiableMap(animationCache);
+    }
+
+    private record RegistrationSnapshot(Map<Identifier, BedrockAnimationResourceProcessor> processors,
+                                        List<Consumer<Map<Identifier, List<BedrockAnimation>>>> listeners) {
     }
 }

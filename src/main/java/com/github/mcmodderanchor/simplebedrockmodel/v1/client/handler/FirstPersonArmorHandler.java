@@ -1,12 +1,15 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler;
 
+import com.github.mcmodderanchor.simplebedrockmodel.v1.client.model.BedrockArmorModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.GeoArmorRenderer;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockBone;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.registry.GeoArmorRendererRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.entity.model.EntityModelLayers;
 import net.minecraft.client.util.math.MatrixStack;
@@ -34,32 +37,30 @@ public class FirstPersonArmorHandler {
         return defaultModel;
     }
 
-    //@SubscribeEvent
-    public static void onRenderArm(RenderArmEvent event) {
-        AbstractClientPlayerEntity player = event.getPlayer();
-        Arm arm = event.getArm();
-
+    public static void renderArm(AbstractClientPlayerEntity player, Arm arm, MatrixStack matrixStack,
+                                 VertexConsumerProvider vertexConsumers, int packedLight) {
         ItemStack chestStack = player.getEquippedStack(EquipmentSlot.CHEST);
         if (chestStack.isEmpty()) return;
 
-        IClientItemExtensions ext = IClientItemExtensions.of(chestStack.getItem());
-        var model = ext.getHumanoidArmorModel(player, chestStack, EquipmentSlot.CHEST, getDefaultModel());
-        if (!(model instanceof GeoArmorRenderer geoRenderer)) return;
+        GeoArmorRenderer geoRenderer = GeoArmorRendererRegistry.getRenderer(chestStack);
+        if (geoRenderer == null) return;
+        geoRenderer.preparePose(player, chestStack, EquipmentSlot.CHEST, getDefaultModel());
+
+        BedrockArmorModel model = geoRenderer.getModel();
+        if (model == null) return;
 
         BedrockBone armBone = arm == Arm.RIGHT
-                ? geoRenderer.getModel().getArmorRightArm()
-                : geoRenderer.getModel().getArmorLeftArm();
+                ? model.getArmorRightArm()
+                : model.getArmorLeftArm();
         if (armBone == null) return;
 
         RenderLayer renderType = geoRenderer.getRenderLayer(geoRenderer.getTexture());
-        VertexConsumer consumer = event.getMultiBufferSource().getBuffer(renderType);
-
-        MatrixStack matrixStack = event.getPoseStack();
+        VertexConsumer consumer = vertexConsumers.getBuffer(renderType);
         matrixStack.push();
 
         matrixStack.multiplyPositionMatrix(getGlobalTransform(armBone));
 
-        armBone.render(matrixStack, consumer, event.getPackedLight(), OverlayTexture.DEFAULT_UV);
+        armBone.render(matrixStack, consumer, packedLight, OverlayTexture.DEFAULT_UV);
 
         matrixStack.pop();
     }

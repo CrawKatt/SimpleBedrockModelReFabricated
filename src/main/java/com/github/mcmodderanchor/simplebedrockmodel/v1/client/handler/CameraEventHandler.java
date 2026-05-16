@@ -1,13 +1,12 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler;
 
-import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.BeforeRenderHandEvent;
-import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.RenderItemInHandBobEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.AbstractGeoItemRenderer;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.registry.GeoItemRendererRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.util.math.MatrixStack;
 import org.joml.*;
 
 @Environment(EnvType.CLIENT)
@@ -64,22 +63,24 @@ public class CameraEventHandler {
     /**
      * 当主手拿着枪械物品的时候，取消应用在它上面的 viewBobbing，以便应用自定义的跑步/走路动画。
      */
-    //@SubscribeEvent
-    public static void cancelItemInHandViewBobbing(RenderItemInHandBobEvent.BobView event) {
+    public static boolean shouldCancelItemInHandViewBobbing() {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player == null) {
-            return;
+            return false;
         }
         var instance = FirstPersonRenderHandler.getActiveAnimationInstance();
 
-        if (instance != null && IClientItemExtensions.of(instance.currentItem()).getCustomRenderer() instanceof AbstractGeoItemRenderer<?> renderer) {
-            event.setCanceled(renderer.blockViewBobbing());
+        if (instance != null) {
+            return GeoItemRendererRegistry.getAbstractGeoRenderer(instance.currentItem())
+                    .map(AbstractGeoItemRenderer::blockViewBobbing)
+                    .orElse(false);
         }
+
+        return false;
     }
 
-    //@SubscribeEvent
-    public static void applyLevelCameraAnimation(ViewportEvent.ComputeCameraAngles event) {
-        if (!MinecraftClient.getInstance().options.bobView().get()) {
+    public static void applyLevelCameraAnimation(float[] cameraAngles, float partialTick) {
+        if (!MinecraftClient.getInstance().options.getBobView().getValue()) {
             return;
         }
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
@@ -88,14 +89,12 @@ public class CameraEventHandler {
         }
         var instance = FirstPersonRenderHandler.getActiveAnimationInstance();
 
-        if (instance != null && IClientItemExtensions.of(instance.currentItem()).getCustomRenderer() instanceof AbstractGeoItemRenderer<?> renderer) {
-            renderer.applyLevelCameraAnimation(event, instance.currentItem(), instance.getCameraRotation(), (float) event.getPartialTick());
-        }
+        GeoItemRendererRegistry.getAbstractGeoRenderer(instance != null ? instance.currentItem() : net.minecraft.item.ItemStack.EMPTY)
+                .ifPresent(renderer -> renderer.applyLevelCameraAnimation(cameraAngles, instance.currentItem(), instance.getCameraRotation(), partialTick));
     }
 
-    //@SubscribeEvent
-    public static void applyItemInHandCameraAnimation(BeforeRenderHandEvent event) {
-        if (!MinecraftClient.getInstance().options.bobView().get()) {
+    public static void onBeforeRenderHands(MatrixStack poseStack, float partialTick) {
+        if (!MinecraftClient.getInstance().options.getBobView().getValue()) {
             return;
         }
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
@@ -104,8 +103,9 @@ public class CameraEventHandler {
         }
         var instance = FirstPersonRenderHandler.getActiveAnimationInstance();
 
-        if (instance != null && IClientItemExtensions.of(instance.currentItem()).getCustomRenderer() instanceof AbstractGeoItemRenderer<?> renderer) {
-            renderer.applyItemInHandCameraAnimation(event.getPoseStack(), instance.currentItem(), instance.getCameraRotation(), event.getPartialTick());
+        if (instance != null) {
+            GeoItemRendererRegistry.getAbstractGeoRenderer(instance.currentItem())
+                    .ifPresent(renderer -> renderer.applyItemInHandCameraAnimation(poseStack, instance.currentItem(), instance.getCameraRotation(), partialTick));
         }
     }
 }

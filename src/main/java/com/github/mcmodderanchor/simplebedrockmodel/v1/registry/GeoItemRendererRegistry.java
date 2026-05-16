@@ -4,7 +4,9 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.AbstractG
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.IFPGeoItemRenderer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.render.item.BuiltinModelItemRenderer;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,8 @@ public final class GeoItemRendererRegistry {
      */
     public static void register(Item item, BuiltinModelItemRenderer renderer) {
         RENDERERS.put(item, renderer);
+        BuiltinItemRendererRegistry.INSTANCE.register(item, (stack, mode, matrices, vertexConsumers, light, overlay) ->
+                renderer.render(stack, mode, matrices, vertexConsumers, light, overlay));
     }
 
     @Nullable

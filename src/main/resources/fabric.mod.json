@@ -15,10 +15,15 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.github.mcmodderanchor.simplebedrockmodel.SimpleBedrockModel"
+      "com.github.mcmodderanchor.simplebedrockmodel.SimpleBedrockModel",
+      "example.init.ExampleMod"
     ],
     "client": [
-      "com.github.mcmodderanchor.simplebedrockmodel.SimpleBedrockModelClient"
+      "com.github.mcmodderanchor.simplebedrockmodel.SimpleBedrockModelClient",
+      "example.init.ExampleModClient"
+    ],
+    "cardinal-components-entity": [
+      "example.init.ExampleEntityComponents"
     ]
   },
   "mixins": [
@@ -29,7 +34,14 @@
     "fabricloader": ">=0.16.0",
     "minecraft": "~1.21.1",
     "java": ">=21",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "cardinal-components-base": "*",
+    "cardinal-components-entity": "*"
+  },
+  "custom": {
+    "cardinal-components": [
+      "example:fp_gun_ani"
+    ]
   },
   "suggests": {
     "sodium": "*",

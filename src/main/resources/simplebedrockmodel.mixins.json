@@ -7,12 +7,11 @@
     "ServerPlayNetworkHandlerMixin"
   ],
   "client": [
-    "client.AgeableListModelAccessor",
     "client.GameRendererMixin",
-    "client.GameRendererLevelMixin",
     "client.HeldItemRendererMixin",
-    "client.ItemInHandRendererHandsMixin",
-    "client.PlayerEntityModelMixin"
+    "client.HeldItemRendererRenderMixin",
+    "client.PlayerEntityModelMixin",
+    "client.PlayerEntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

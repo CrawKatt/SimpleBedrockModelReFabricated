@@ -6,7 +6,9 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler.FirstPerso
 import com.github.mcmodderanchor.simplebedrockmodel.v1.network.ClientNetworkHandler;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.resource.ReloadListenersRegister;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.minecraft.client.MinecraftClient;
 
 public class SimpleBedrockModelClient implements ClientModInitializer {
     @Override
@@ -25,5 +27,10 @@ public class SimpleBedrockModelClient implements ClientModInitializer {
 
         // Register rendering event handlers
         SimpleBedrockModelEvents.registerRenderEventHandlers();
+
+        WorldRenderEvents.START.register(context -> {
+            FirstPersonRenderHandler.onRenderFrame();
+            FirstPersonRenderHandler.tickAnimation(MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true));
+        });
     }
 }

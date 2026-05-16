@@ -1,13 +1,15 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.animation.IFPAnimationInstance;
-import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.SwapItemWithOffHand;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.IFPGeoItemRenderer;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.registry.GeoItemRendererRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 
@@ -34,12 +36,6 @@ public class FirstPersonRenderHandler {
 
     private static boolean forceHandSwapFlag = false;
 
-    //@SubscribeEvent
-    public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
-        // 离开游戏时重置客户端状态
-        reset();
-    }
-
     public static void reset() {
         realSelectedSlot = -1;
         realMainHand = ItemStack.EMPTY;
@@ -53,13 +49,11 @@ public class FirstPersonRenderHandler {
     }
 
 
-    //@SubscribeEvent
-    public static void onRenderHand(SwapItemWithOffHand event) {
+    public static void onSwapItemWithOffhand() {
         forceHandSwapFlag = true;
     }
 
-    //@SubscribeEvent
-    public static void onClientTick(RenderFrameEvent.Pre event) {
+    public static void onRenderFrame() {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player == null) return;
 
@@ -153,36 +147,37 @@ public class FirstPersonRenderHandler {
         }
     }
 
-    //@SubscribeEvent
-    public static void tickAnimation(RenderFrameEvent.Pre event) {
+    public static void tickAnimation(float partialTick) {
         var ani = getActiveAnimationInstance();
         if (ani != null) {
             ani.triggerDraw();
-            ani.tick(event.getPartialTick().getGameTimeDeltaPartialTick(true));
+            ani.tick(partialTick);
         }
     }
 
-    //@SubscribeEvent
-    public static void onRenderHand(RenderHandEvent event) {
+    public static boolean onRenderHand(Hand hand, ItemStack ignoredStack, MatrixStack matrixStack, VertexConsumerProvider bufferSource, int light, float partialTick) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) return;
+        if (player == null) {
+            return false;
+        }
 
         IFPAnimationInstance inst = getActiveAnimationInstance();
-        if (inst == null) return;
+        if (inst == null) {
+            return false;
+        }
 
         ItemStack stack = inst.currentItem();
-        if (stack.isEmpty()) return;
+        if (stack.isEmpty()) {
+            return false;
+        }
 
-        getRenderer(stack).ifPresent(renderer -> {
-            if (event.getHand() == InteractionHand.OFF_HAND) {
-                if (renderer.blockOffhandRender()) {
-                    event.setCanceled(true);
-                }
-                return;
+        return getRenderer(stack).map(renderer -> {
+            if (hand == Hand.OFF_HAND) {
+                return renderer.blockOffhandRender();
             }
 
             ModelTransformationMode transformType;
-            if (event.getHand() == Hand.MAIN_HAND) {
+            if (hand == Hand.MAIN_HAND) {
                 transformType = ModelTransformationMode.FIRST_PERSON_RIGHT_HAND;
             } else {
                 transformType = ModelTransformationMode.FIRST_PERSON_LEFT_HAND;
@@ -191,13 +186,13 @@ public class FirstPersonRenderHandler {
                     player,
                     stack,
                     transformType,
-                    event.getPoseStack(),
-                    event.getMultiBufferSource(),
-                    event.getPackedLight(),
-                    event.getPartialTick()
+                    matrixStack,
+                    bufferSource,
+                    light,
+                    partialTick
             );
-            event.setCanceled(true);
-        });
+            return true;
+        }).orElse(false);
     }
 
     public static boolean shouldLockVanilla() {
@@ -236,12 +231,7 @@ public class FirstPersonRenderHandler {
     }
 
     private static Optional<IFPGeoItemRenderer> getRenderer(ItemStack stack) {
-        if (stack.isEmpty()) return Optional.empty();
-        if (IClientItemExtensions.of(stack.getItem()).getCustomRenderer()
-                instanceof IFPGeoItemRenderer renderer) {
-            return Optional.of(renderer);
-        }
-        return Optional.empty();
+        return GeoItemRendererRegistry.getFPRenderer(stack);
     }
 
     private static boolean isSameItemStacks(ItemStack oldStack, ItemStack newStack) {

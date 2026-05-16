@@ -22,15 +22,15 @@ import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
 
 //@EventBusSubscriber(value = Dist.CLIENT)
 public class DeagleWithoutLevelRenderer implements BuiltinItemRendererRegistry.DynamicItemRenderer {
-    private static final SpriteIdentifier material = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, KnownResources.DEAGLE.withPrefixedPath("item/"));
+    private static final SpriteIdentifier material = new SpriteIdentifier(net.minecraft.screen.PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of(KnownResources.DEAGLE.getNamespace(), "item/" + KnownResources.DEAGLE.getPath()));
 
     private static BedrockModel model;
 
@@ -57,26 +57,24 @@ public class DeagleWithoutLevelRenderer implements BuiltinItemRendererRegistry.D
         //super(MinecraftClient.getInstance().getBlockEntityRenderDispatcher(), MinecraftClient.getInstance().getEntityModels());
     }
 
-    //@SubscribeEvent
-    public static void onFirstPersonRender(RenderHandEvent event) {
-        if (event.getItemStack().getItem() == ExampleModRegister.DEAGLE_ITEM && event.getHand() == Hand.MAIN_HAND) {
+    public static boolean onFirstPersonRender(Hand hand, ItemStack stack, MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, int packedLight, float partialTick) {
+        if (stack.getItem() == ExampleModRegister.DEAGLE_ITEM && hand == Hand.MAIN_HAND && model != null) {
             MinecraftClient mc = MinecraftClient.getInstance();
             // 从 AnimationInstance 中获取 AnimationGraph，然后计算当前帧的 Pose，然后混合并 apply
             if (mc.getCameraEntity() instanceof PlayerEntity player) {
-                var cap = FPGunAnimationCapability.get(player); // ToDo: Crear Cardinal Component equivalente
+                var cap = FPGunAnimationCapability.get(player);
                 GunAnimationGraph animationGraph = cap.getAnimationInstance().getAnimationGraph();
                 if (animationGraph != null) {
                     model.applyPose(animationGraph.getPose());
                 }
             }
-            MatrixStack matrixStack = event.getMatrixStack();
             matrixStack.push();
             {
                 // 反转 Bobbing
                 if (mc.options.getBobView().getValue() && (mc.getCameraEntity() instanceof PlayerEntity player)) {
                     float f = player.horizontalSpeed - player.prevHorizontalSpeed;
-                    float f1 = -(player.horizontalSpeed + f * event.getPartialTick());
-                    float f2 = MathHelper.lerp(event.getPartialTick(), player.prevStrideDistance, player.strideDistance);
+                    float f1 = -(player.horizontalSpeed + f * partialTick);
+                    float f2 = MathHelper.lerp(partialTick, player.prevStrideDistance, player.strideDistance);
                     matrixStack.multiply(RotationAxis.NEGATIVE_X.rotationDegrees(Math.abs(MathHelper.cos(f1 * (float)Math.PI - 0.2F) * f2) * 5.0F));
                     matrixStack.multiply(RotationAxis.NEGATIVE_Z.rotationDegrees(MathHelper.sin(f1 * (float)Math.PI) * f2 * 3.0F));
                     matrixStack.translate(-MathHelper.sin(f1 * (float)Math.PI) * f2 * 0.5F, Math.abs(MathHelper.cos(f1 * (float)Math.PI) * f2), 0.0F);
@@ -84,8 +82,8 @@ public class DeagleWithoutLevelRenderer implements BuiltinItemRendererRegistry.D
                 // 这里的 translate 是为了把枪放到合适位置，为了方便直接硬编码了
                 matrixStack.translate(0.125, -0.5, -1.03125);
                 // 执行渲染
-                VertexConsumer buffer = material.getVertexConsumer(event.getMultiBufferSource(), RenderLayer::getEntityCutout);
-                model.renderToBuffer(matrixStack, buffer, event.getPackedLight(), OverlayTexture.DEFAULT_UV);
+                VertexConsumer buffer = material.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutout);
+                model.renderToBuffer(matrixStack, buffer, packedLight, OverlayTexture.DEFAULT_UV);
                 // 渲染手臂
                 if (mc.getCameraEntity() instanceof AbstractClientPlayerEntity abstractClientPlayer) {
                     BedrockBone leftHandBone = model.getBone("lefthand_pos");
@@ -96,30 +94,31 @@ public class DeagleWithoutLevelRenderer implements BuiltinItemRendererRegistry.D
                         Matrix4f globalTransform = leftHandBone.getGlobalTransform();
                         matrixStack.push();
                         matrixStack.multiplyPositionMatrix(globalTransform);
-                        playerRenderer.renderLeftArm(matrixStack, event.getMultiBufferSource(), event.getPackedLight(), abstractClientPlayer);
+                        playerRenderer.renderLeftArm(matrixStack, vertexConsumers, packedLight, abstractClientPlayer);
                         matrixStack.pop();
                     }
                     if (rightHandBone != null) {
                         Matrix4f globalTransform = rightHandBone.getGlobalTransform();
                         matrixStack.push();
                         matrixStack.multiplyPositionMatrix(globalTransform);
-                        playerRenderer.renderRightArm(matrixStack, event.getMultiBufferSource(), event.getPackedLight(), abstractClientPlayer);
+                        playerRenderer.renderRightArm(matrixStack, vertexConsumers, packedLight, abstractClientPlayer);
                         matrixStack.pop();
                     }
                 }
             }
             matrixStack.pop();
-            event.setCanceled(true);
             // 恢复被动画影响的模型
             model.applyPose(model.getBindPose());
+            return true;
         }
+        return false;
     }
 
     @Override
     public void render(ItemStack itemStack, ModelTransformationMode ctx, MatrixStack matrixStack, VertexConsumerProvider bufferSource,
                        int light, int overlay) {
         // 第一人称不用这个渲染，而是改为监听 RenderHandEvent 渲染。这里测试实现的比较粗糙，实际生产环境需要斟酌
-        if (ctx.isFirstPerson()) {
+        if (ctx.isFirstPerson() || model == null) {
             return;
         }
         matrixStack.push();

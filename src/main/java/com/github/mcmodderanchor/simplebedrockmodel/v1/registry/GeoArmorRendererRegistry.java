@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Registry for custom armor renderers (Fabric replacement for IClientItemExtensions.getHumanoidArmorModel()).
@@ -16,19 +17,20 @@ import java.util.Map;
 @Environment(EnvType.CLIENT)
 public final class GeoArmorRendererRegistry {
 
-    private static final Map<Item, GeoArmorRenderer> RENDERERS = new IdentityHashMap<>();
+    private static final Map<Item, Supplier<GeoArmorRenderer>> RENDERERS = new IdentityHashMap<>();
 
     /**
      * Registers a GeoArmorRenderer for an item.
      */
-    public static void register(Item item, GeoArmorRenderer renderer) {
-        RENDERERS.put(item, renderer);
+    public static void register(Item item, Supplier<GeoArmorRenderer> rendererFactory) {
+        RENDERERS.put(item, rendererFactory);
     }
 
     @Nullable
     public static GeoArmorRenderer getRenderer(ItemStack stack) {
         if (stack.isEmpty()) return null;
-        return RENDERERS.get(stack.getItem());
+        Supplier<GeoArmorRenderer> supplier = RENDERERS.get(stack.getItem());
+        return supplier != null ? supplier.get() : null;
     }
 
     private GeoArmorRendererRegistry() {}

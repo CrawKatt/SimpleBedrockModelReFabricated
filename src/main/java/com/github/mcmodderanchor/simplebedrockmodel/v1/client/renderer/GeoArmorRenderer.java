@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 // 说是模型，实际上是一个适配器，用来敷衍原版的）
 public class GeoArmorRenderer extends BipedEntityModel {
+    @Nullable
     protected final BedrockArmorModel model;
     private final Identifier texture;
 
@@ -39,6 +40,10 @@ public class GeoArmorRenderer extends BipedEntityModel {
     }
 
     public void preparePose(LivingEntity livingEntity, ItemStack itemStack, EquipmentSlot equipmentSlot, BipedEntityModel<?> original) {
+        if (model == null) {
+            return;
+        }
+
         model.applyPose(model.getBindPose());
 
         copyModelPart(original.head, model.getArmorHead(), 0, 24, 0);
@@ -78,6 +83,10 @@ public class GeoArmorRenderer extends BipedEntityModel {
     }
 
     public void setVisibilityBySlot(EquipmentSlot slot) {
+        if (model == null) {
+            return;
+        }
+
         setBoneVisible(model.getArmorHead(), slot == EquipmentSlot.HEAD);
         setBoneVisible(model.getArmorBody(), slot == EquipmentSlot.CHEST);
         setBoneVisible(model.getArmorRightArm(), slot == EquipmentSlot.CHEST);
@@ -115,6 +124,11 @@ public class GeoArmorRenderer extends BipedEntityModel {
 
     @Override
     public void render(MatrixStack poseStack, @NotNull VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        if (model == null) {
+            afterRender(poseStack, buffer, packedLight, packedOverlay, 0, 0, 0, 0);
+            return;
+        }
+
         MinecraftClient mc = MinecraftClient.getInstance();
         VertexConsumerProvider bufferSource = mc.getBufferBuilders().getEntityVertexConsumers();
         var vertexConsumer = bufferSource.getBuffer(this.getRenderLayer(this.getTexture()));
@@ -153,6 +167,7 @@ public class GeoArmorRenderer extends BipedEntityModel {
         return this.texture;
     }
 
+    @Nullable
     public BedrockArmorModel getModel() {
         return this.model;
     }
