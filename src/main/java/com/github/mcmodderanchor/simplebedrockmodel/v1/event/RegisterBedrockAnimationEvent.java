@@ -6,46 +6,40 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.Bedr
 import com.github.mcmodderanchor.simplebedrockmodel.v1.resource.BedrockAnimationResourceProcessor;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.resource.RawResourceLoader;
 import com.google.common.collect.Maps;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.Event;
-import net.neoforged.fml.event.IModBusEvent;
+import net.fabricmc.api.EnvType;
+import net.minecraft.util.Identifier;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-/**
- * Used to register bedrock animations so that loaders can load them.
- */
-public class RegisterBedrockAnimationEvent extends Event implements IModBusEvent {
-    private final Map<ResourceLocation, BedrockAnimationResourceProcessor> animationRegistry;
-    private final Dist dist;
+public class RegisterBedrockAnimationEvent {
+    private final Map<Identifier, BedrockAnimationResourceProcessor> animationRegistry;
+    private final EnvType envType;
 
-    public RegisterBedrockAnimationEvent(Dist dist) {
+    public RegisterBedrockAnimationEvent(EnvType envType) {
         this.animationRegistry = Maps.newHashMap();
-        this.dist = dist;
+        this.envType = envType;
     }
 
-    public void register(ResourceLocation animationLocation,
-                         ResourceLocation modelLocation,
+    public void register(Identifier animationLocation,
+                         Identifier modelLocation,
                          RawResourceLoader loader,
                          BiFunction<BedrockAnimationFile, BedrockModel, List<BedrockAnimation>> converter) {
         animationRegistry.put(animationLocation, new BedrockAnimationResourceProcessor(loader, modelLocation, converter));
     }
 
-    public void register(ResourceLocation animationLocation,
-                         ResourceLocation modelLocation,
+    public void register(Identifier animationLocation,
+                         Identifier modelLocation,
                          RawResourceLoader loader) {
         register(animationLocation, modelLocation, loader, BedrockAnimation::createAnimation);
     }
 
-
-    public Dist getDist() {
-        return dist;
+    public EnvType getEnvType() {
+        return envType;
     }
 
-    public Map<ResourceLocation, BedrockAnimationResourceProcessor> getAnimationRegistry() {
+    public Map<Identifier, BedrockAnimationResourceProcessor> getAnimationRegistry() {
         return animationRegistry;
     }
 }

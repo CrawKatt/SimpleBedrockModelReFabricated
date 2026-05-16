@@ -8,60 +8,60 @@ import com.maydaymemory.mae.basic.Pose;
 import com.maydaymemory.mae.basic.ZYXBoneTransformFactory;
 import com.maydaymemory.mae.blend.EulerAdditiveBlender;
 import com.maydaymemory.mae.blend.SimpleEulerAdditiveBlender;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import example.entity.Zti;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.EntityRendererFactory;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RotationAxis;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
 public class ZtiRenderer extends EntityRenderer<Zti> {
-    public static final ResourceLocation TEXTURE =  ResourceLocation.fromNamespaceAndPath("example", "textures/entity/zti.png");
-    public static final ResourceLocation MODEL =  ResourceLocation.fromNamespaceAndPath("example", "zti.geo");
-    public static final ResourceLocation ANIMATION =  ResourceLocation.fromNamespaceAndPath("example", "zti.animation");
+    public static final Identifier TEXTURE =  Identifier.of("example", "textures/entity/zti.png");
+    public static final Identifier MODEL =  Identifier.of("example", "zti.geo");
+    public static final Identifier ANIMATION =  Identifier.of("example", "zti.animation");
 
     private static final EulerAdditiveBlender BLENDER = new SimpleEulerAdditiveBlender(new ZYXBoneTransformFactory(), ArrayPoseBuilder::new);
 
     private final Supplier<EntityModel> modelSupplier;
 
-    public ZtiRenderer(EntityRendererProvider.Context context) {
+    public ZtiRenderer(EntityRendererFactory.Context context) {
         super(context);
         this.shadowRadius = 1.0F;
         this.modelSupplier = Suppliers.memoize(() -> (EntityModel) BedrockModelResourceSet.getInstance().getModel(MODEL));
     }
 
     @Override
-    public void render(@NotNull Zti entity, float entityYaw, float partialTick, @NotNull PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+    public void render(@NotNull Zti entity, float entityYaw, float partialTick, @NotNull MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, int packedLight) {
         EntityModel model = modelSupplier.get();
         if (model != null) {
             entity.getAnimationInstance().renderTick();
             Pose blendedPose = BLENDER.blend(model.getBindPose(), entity.getAnimationInstance().getStateMachine().getPose());
             model.applyPose(blendedPose);
 
-            poseStack.pushPose();
+            matrixStack.push();
 
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot)));
+            matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - MathHelper.lerpAngleDegrees(partialTick, entity.prevBodyYaw, entity.bodyYaw)));
 
-            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutout(TEXTURE));
-            model.renderToBuffer(poseStack, consumer, packedLight,
-                    OverlayTexture.pack(0f, entity.hurtTime > 0 || entity.deathTime > 0)
+            VertexConsumer consumer = vertexConsumers.getBuffer(RenderLayer.getEntityCutout(TEXTURE));
+            model.renderToBuffer(matrixStack, consumer, packedLight,
+                    OverlayTexture.getUv(0.0F, entity.hurtTime > 0 || entity.deathTime > 0)
             );
             model.applyPose(model.getBindPose());
-            poseStack.popPose();
+            matrixStack.pop();
         }
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        super.render(entity, entityYaw, partialTick, matrixStack, vertexConsumers, packedLight);
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull Zti entity) {
+    public @NotNull Identifier getTexture(@NotNull Zti entity) {
         return TEXTURE;
     }
 }

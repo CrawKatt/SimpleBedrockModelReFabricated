@@ -3,43 +3,41 @@ package example.block;
 import com.mojang.serialization.MapCodec;
 import example.block.blockentity.TestBlockEntity;
 import example.init.ExampleModRegister;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.block.*;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.state.StateManager;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final MapCodec<TestBlock> CODEC = simpleCodec(TestBlock::new);
-    public TestBlock(BlockBehaviour.Properties properties) {
-        super(Properties.of()
-                .mapColor(MapColor.PODZOL)
+public class TestBlock extends HorizontalFacingBlock implements BlockEntityProvider {
+    public static final MapCodec<TestBlock> CODEC = createCodec(TestBlock::new);
+    public TestBlock(AbstractBlock.Settings properties) {
+        super(AbstractBlock.Settings.create()
+                .mapColor(MapColor.DIRT_BROWN)
                 .strength(2.0F)
-                .sound(SoundType.WOOD)
-                .lightLevel(s -> 15)
-                .noOcclusion()
-                .ignitedByLava());
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+                .sounds(BlockSoundGroup.WOOD)
+                .luminance(s -> 15)
+                .nonOpaque()
+                .burnable());
+        this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
     }
 
     public TestBlock() {
-        super(Properties.of()
-                .mapColor(MapColor.PODZOL)
+        super(AbstractBlock.Settings.create()
+                .mapColor(MapColor.DIRT_BROWN)
                 .strength(2.0F)
-                .sound(SoundType.WOOD)
-                .lightLevel(s -> 15)
-                .noOcclusion()
-                .ignitedByLava());
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+                .sounds(BlockSoundGroup.WOOD)
+                .luminance(s -> 15)
+                .nonOpaque()
+                .burnable());
+        this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
     }
 
     private static final BlockEntityTicker<TestBlockEntity> ticker = (level, pos, state, blockEntity) -> {
@@ -48,18 +46,18 @@ public class TestBlock extends HorizontalDirectionalBlock implements EntityBlock
 
     @Override
     @Nullable
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection());
+    public BlockState getPlacementState(ItemPlacementContext context) {
+        return this.getDefaultState().with(FACING, context.getHorizontalPlayerFacing());
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(FACING);
     }
 
     @Override
     @Nullable
-    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+    public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
         return new TestBlockEntity(blockPos, blockState);
     }
 
@@ -83,7 +81,7 @@ public class TestBlock extends HorizontalDirectionalBlock implements EntityBlock
 
     @Nullable
     @SuppressWarnings("unchecked")
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level pLevel,
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull World pLevel,
                                                                    @NotNull BlockState pState,
                                                                    @NotNull BlockEntityType<T> pBlockEntityType) {
         if (pBlockEntityType == ExampleModRegister.TEST_BLOCK_ENTITY_TYPE) {
@@ -94,7 +92,7 @@ public class TestBlock extends HorizontalDirectionalBlock implements EntityBlock
     }
 
     @Override
-    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
         return CODEC;
     }
 }

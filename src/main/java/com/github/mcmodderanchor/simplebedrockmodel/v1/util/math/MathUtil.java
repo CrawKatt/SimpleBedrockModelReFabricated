@@ -1,9 +1,9 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.util.math;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.util.math.MatrixStack;
+import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
-import javax.annotation.Nonnull;
 import java.lang.Math;
 
 public class MathUtil {
@@ -29,12 +29,12 @@ public class MathUtil {
                 Math.atan(Math.tan(Math.toRadians(originFov / 2)) * coefficient);
     }
 
-    public static void mulMatrix(PoseStack poseStack, Matrix4fc matrix) {
+    public static void mulMatrix(MatrixStack poseStack, Matrix4fc matrix) {
         Matrix3f linearPart = new Matrix3f(matrix);
         linearPart.invert();
         linearPart.transpose();
-        poseStack.last().normal().mul(linearPart);
-        poseStack.last().pose().mul(matrix);
+        poseStack.peek().getNormalMatrix().mul(linearPart);
+        poseStack.peek().getPositionMatrix().mul(matrix);
     }
 
     /**
@@ -66,7 +66,7 @@ public class MathUtil {
      * @param roll 绕 z 轴旋转的弧度
      * @param quaternion 求解的结果将写入这个四元数中。
      */
-    public static void toQuaternion(float pitch, float yaw, float roll, @Nonnull Quaternionf quaternion) {
+    public static void toQuaternion(float pitch, float yaw, float roll, @NotNull Quaternionf quaternion) {
         double cy = Math.cos(roll * 0.5);
         double sy = Math.sin(roll * 0.5);
         double cp = Math.cos(yaw * 0.5);

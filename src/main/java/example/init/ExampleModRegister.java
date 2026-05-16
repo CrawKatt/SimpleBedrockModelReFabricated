@@ -6,24 +6,19 @@ import example.capability.FPGunAnimationCapability;
 import example.entity.Zti;
 import example.item.DeagleItem;
 import example.item.ExampleArmorItem;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.item.*;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.common.DeferredSpawnEggItem;
-import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
-import net.neoforged.neoforge.registries.RegisterEvent;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.minecraft.block.Block;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.EntityType;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.SpawnEggItem;
+import net.minecraft.registry.Registries;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+//@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class ExampleModRegister {
     /**
      * 注册名用 example，方便 build 时排除
@@ -43,9 +38,9 @@ public class ExampleModRegister {
     public static ExampleArmorItem DEFENDER_ARMOR_BOOTS;
 
     public static SpawnEggItem ZTI_SPAWN_EGG;
-    public static CreativeModeTab TEST_TAB;
+    public static ItemGroup TEST_TAB;
 
-    @SubscribeEvent // on the mod event bus
+    //@SubscribeEvent // on the mod event bus
     public static void register(RegisterEvent event) {
         var registry = event.getRegistry();
 
@@ -94,7 +89,7 @@ public class ExampleModRegister {
         }
 
         if (Registries.CREATIVE_MODE_TAB.equals(event.getRegistryKey())) {
-            TEST_TAB = CreativeModeTab.builder().title(Component.translatable("item_group.example.name"))
+            TEST_TAB = CreativeModeTab.builder().title(Text.translatable("item_group.example.name"))
                     .icon(() -> DEAGLE_ITEM.getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(TEST_BLOCK_ITEM);
@@ -109,14 +104,14 @@ public class ExampleModRegister {
         }
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
         if (ZTI_ENTITY_TYPE != null) {
             event.put(ZTI_ENTITY_TYPE, Zti.createAttributes().build());
         }
     }
 
-    public static ResourceLocation modLoc(String name) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, name);
+    public static Identifier modLoc(String name) {
+        return Identifier.of(MOD_ID, name);
     }
 }

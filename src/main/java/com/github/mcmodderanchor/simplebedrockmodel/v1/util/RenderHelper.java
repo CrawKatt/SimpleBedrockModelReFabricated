@@ -1,47 +1,40 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.player.PlayerRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.world.entity.HumanoidArm;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.ClientHooks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.*;
+import net.minecraft.client.render.entity.EntityRenderDispatcher;
+import net.minecraft.client.render.entity.PlayerEntityRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Arm;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class RenderHelper {
-    public static void blit(PoseStack poseStack, float x, float y, float uOffset, float vOffset, float pWidth, float height, float textureWidth, float textureHeight) {
+    public static void blit(MatrixStack poseStack, float x, float y, float uOffset, float vOffset, float pWidth, float height, float textureWidth, float textureHeight) {
         blit(poseStack, x, y, pWidth, height, uOffset, vOffset, pWidth, height, textureWidth, textureHeight);
     }
 
-    private static void blit(PoseStack poseStack, float x, float y, float pWidth, float height, float uOffset, float vOffset, float uWidth, float vHeight, float textureWidth, float textureHeight) {
+    private static void blit(MatrixStack poseStack, float x, float y, float pWidth, float height, float uOffset, float vOffset, float uWidth, float vHeight, float textureWidth, float textureHeight) {
         innerBlit(poseStack, x, x + pWidth, y, y + height, 0, uWidth, vHeight, uOffset, vOffset, textureWidth, textureHeight);
     }
 
-    private static void innerBlit(PoseStack poseStack, float x1, float x2, float y1, float y2, float blitOffset, float uWidth, float vHeight, float uOffset, float vOffset, float textureWidth, float textureHeight) {
-        innerBlit(poseStack.last().pose(), x1, x2, y1, y2, blitOffset, (uOffset + 0.0F) / textureWidth, (uOffset + uWidth) / textureWidth, (vOffset + 0.0F) / textureHeight, (vOffset + vHeight) / textureHeight);
+    private static void innerBlit(MatrixStack poseStack, float x1, float x2, float y1, float y2, float blitOffset, float uWidth, float vHeight, float uOffset, float vOffset, float textureWidth, float textureHeight) {
+        innerBlit(poseStack.peek().getPositionMatrix(), x1, x2, y1, y2, blitOffset, (uOffset + 0.0F) / textureWidth, (uOffset + uWidth) / textureWidth, (vOffset + 0.0F) / textureHeight, (vOffset + vHeight) / textureHeight);
     }
 
     private static void innerBlit(Matrix4f matrix, float x1, float x2, float y1, float y2, float blitOffset, float minU, float maxU, float minV, float maxV) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        BufferBuilder bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferbuilder.addVertex(matrix, x1, y2, blitOffset).setUv(minU, maxV);
-        bufferbuilder.addVertex(matrix, x2, y2, blitOffset).setUv(maxU, maxV);
-        bufferbuilder.addVertex(matrix, x2, y1, blitOffset).setUv(maxU, minV);
-        bufferbuilder.addVertex(matrix, x1, y1, blitOffset).setUv(minU, minV);
-        BufferUploader.draw(bufferbuilder.buildOrThrow());
+        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        BufferBuilder bufferbuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+        bufferbuilder.vertex(matrix, x1, y2, blitOffset).texture(minU, maxV);
+        bufferbuilder.vertex(matrix, x2, y2, blitOffset).texture(maxU, maxV);
+        bufferbuilder.vertex(matrix, x2, y1, blitOffset).texture(maxU, minV);
+        bufferbuilder.vertex(matrix, x1, y1, blitOffset).texture(minU, minV);
+        BufferRenderer.draw(bufferbuilder.end());
     }
 
 //    public static void enableItemEntityStencilTest() {
@@ -61,7 +54,7 @@ public final class RenderHelper {
 //                }
 //            }
 //        } else {
-//            Minecraft.getInstance().getMainRenderTarget().enableStencil();
+//            MinecraftClient.getInstance().getMainRenderTarget().enableStencil();
 //        }
 //        GL11.glEnable(GL11.GL_STENCIL_TEST);
 //    }
@@ -71,18 +64,18 @@ public final class RenderHelper {
         GL11.glDisable(GL11.GL_STENCIL_TEST);
     }
 
-    public static void renderFirstPersonArm(LocalPlayer player, HumanoidArm hand, PoseStack matrixStack, int combinedLight) {
-        Minecraft mc = Minecraft.getInstance();
+    public static void renderFirstPersonArm(ClientPlayerEntity player, Arm hand, MatrixStack matrixStack, int combinedLight) {
+        MinecraftClient mc = MinecraftClient.getInstance();
         EntityRenderDispatcher renderManager = mc.getEntityRenderDispatcher();
-        PlayerRenderer renderer = (PlayerRenderer) renderManager.getRenderer(player);
-        MultiBufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        PlayerEntityRenderer renderer = (PlayerEntityRenderer) renderManager.getRenderer(player);
+        VertexConsumerProvider buffer = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
         int oldId = RenderSystem.getShaderTexture(0);
-        RenderSystem.setShaderTexture(0, player.getSkin().texture());
+        RenderSystem.setShaderTexture(0, player.getSkinTextures().texture());
 
-        if (hand == HumanoidArm.RIGHT) {
-            renderer.renderRightHand(matrixStack, buffer, combinedLight, player);
+        if (hand == Arm.RIGHT) {
+            renderer.renderRightArm(matrixStack, buffer, combinedLight, player);
         } else {
-            renderer.renderLeftHand(matrixStack, buffer, combinedLight, player);
+            renderer.renderLeftArm(matrixStack, buffer, combinedLight, player);
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Vector3f;
 
 public interface BedrockCube {
@@ -37,7 +37,7 @@ public interface BedrockCube {
      * @param blue     the blue color component (0.0 to 1.0)
      * @param alpha    the alpha (transparency) component (0.0 to 1.0)
      */
-    void compile(PoseStack.Pose pose, Vector3f[] normals, VertexConsumer consumer, int lightmap, int overlay, float red, float green, float blue, float alpha);
+    void compile(MatrixStack.Entry pose, Vector3f[] normals, VertexConsumer consumer, int lightmap, int overlay, float red, float green, float blue, float alpha);
 
     float width();
 

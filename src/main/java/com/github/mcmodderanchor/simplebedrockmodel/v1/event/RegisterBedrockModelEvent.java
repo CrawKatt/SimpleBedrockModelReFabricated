@@ -5,39 +5,37 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.Bedr
 import com.github.mcmodderanchor.simplebedrockmodel.v1.resource.BedrockModelResourceProcessor;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.resource.RawResourceLoader;
 import com.google.common.collect.Maps;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.Event;
-import net.neoforged.fml.event.IModBusEvent;
+import net.fabricmc.api.EnvType;
+import net.minecraft.util.Identifier;
 
 import java.util.Map;
 import java.util.function.Function;
 
-public class RegisterBedrockModelEvent extends Event implements IModBusEvent {
-    private final Map<ResourceLocation, BedrockModelResourceProcessor> modelRegistry;
-    private final Dist dist;
+public class RegisterBedrockModelEvent {
+    private final Map<Identifier, BedrockModelResourceProcessor> modelRegistry;
+    private final EnvType envType;
 
-    public RegisterBedrockModelEvent(Dist dist) {
+    public RegisterBedrockModelEvent(EnvType envType) {
         this.modelRegistry = Maps.newHashMap();
-        this.dist = dist;
+        this.envType = envType;
     }
 
-    public void register(ResourceLocation modelLocation,
+    public void register(Identifier modelLocation,
                          RawResourceLoader loader,
                          Function<BedrockModelPOJO, BedrockModel> converter) {
         modelRegistry.put(modelLocation, new BedrockModelResourceProcessor(loader, converter));
     }
 
-    public void register(ResourceLocation modelLocation,
+    public void register(Identifier modelLocation,
                          RawResourceLoader loader) {
         register(modelLocation, loader, BedrockModel::new);
     }
 
-    public Dist getDist() {
-        return dist;
+    public EnvType getEnvType() {
+        return envType;
     }
 
-    public Map<ResourceLocation, BedrockModelResourceProcessor> getModelRegistry() {
+    public Map<Identifier, BedrockModelResourceProcessor> getModelRegistry() {
         return modelRegistry;
     }
 }

@@ -2,26 +2,26 @@ package com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.model.BedrockArmorModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockBone;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.model.ModelPart;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.model.BipedEntityModel;
+import net.minecraft.client.render.entity.model.EntityModelLayers;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.ColorHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 // 说是模型，实际上是一个适配器，用来敷衍原版的）
-public class GeoArmorRenderer extends HumanoidModel {
+public class GeoArmorRenderer extends BipedEntityModel {
     protected final BedrockArmorModel model;
-    private final ResourceLocation texture;
+    private final Identifier texture;
 
     @Nullable
     protected LivingEntity livingEntity;
@@ -30,15 +30,15 @@ public class GeoArmorRenderer extends HumanoidModel {
     @Nullable
     protected EquipmentSlot equipmentSlot;
     @Nullable
-    protected HumanoidModel<?> original;
+    protected BipedEntityModel<?> original;
 
-    public GeoArmorRenderer(BedrockArmorModel origin, ResourceLocation texture) {
-        super(Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.PLAYER_INNER_ARMOR));
+    public GeoArmorRenderer(BedrockArmorModel origin, Identifier texture) {
+        super(MinecraftClient.getInstance().getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_INNER_ARMOR));
         this.model = origin;
         this.texture = texture;
     }
 
-    public void preparePose(LivingEntity livingEntity, ItemStack itemStack, EquipmentSlot equipmentSlot, HumanoidModel<?> original) {
+    public void preparePose(LivingEntity livingEntity, ItemStack itemStack, EquipmentSlot equipmentSlot, BipedEntityModel<?> original) {
         model.applyPose(model.getBindPose());
 
         copyModelPart(original.head, model.getArmorHead(), 0, 24, 0);
@@ -60,15 +60,15 @@ public class GeoArmorRenderer extends HumanoidModel {
 
     public void copyModelPart(ModelPart part, BedrockBone bone, float initX, float initY, float initZ) {
         if (bone != null) {
-            float deltaX = part.x - initX;
-            float deltaY = part.y - initY;
-            float deltaZ = part.z - initZ;
+            float deltaX = part.pivotX - initX;
+            float deltaY = part.pivotY - initY;
+            float deltaZ = part.pivotZ - initZ;
 
             bone.x += deltaX;
             bone.y += deltaY;
             bone.z += deltaZ;
 
-            bone.rotation.rotationZYX(part.zRot, part.yRot, part.xRot);
+            bone.rotation.rotationZYX(part.roll, part.yaw, part.pitch);
 
             bone.xScale = -part.xScale;
             bone.yScale = -part.yScale;
@@ -94,52 +94,50 @@ public class GeoArmorRenderer extends HumanoidModel {
         }
     }
 
-    public void scaleModelForBaby(PoseStack poseStack, LivingEntity livingEntity, float partialTick, EquipmentSlot slot,
-                                  HumanoidModel<?> original) {
-        if (!this.young)
+    public void scaleModelForBaby(MatrixStack poseStack, LivingEntity livingEntity, float partialTick, EquipmentSlot slot,
+                                  BipedEntityModel<?> original) {
+        // En Yarn, AnimalModel define 'child' en lugar de 'young'
+        if (!this.child)
             return;
 
         if (slot == EquipmentSlot.HEAD) {
-            if (original.scaleHead) {
-                float headScale = 1.5f / original.babyHeadScale;
+            float headScale = 1.5f / 2.0f;
 
-                poseStack.scale(headScale, headScale, headScale);
-            }
-
-            poseStack.translate(0, original.babyYHeadOffset / 16f, original.babyZHeadOffset / 16f);
+            poseStack.scale(headScale, headScale, headScale);
+            poseStack.translate(0, 1.0f, 0f);
         } else {
-            float bodyScale = 1 / original.babyBodyScale;
+            float bodyScale = 1f / 2.0f;
 
             poseStack.scale(bodyScale, bodyScale, bodyScale);
-            poseStack.translate(0, original.bodyYOffset / 16f, 0);
+            poseStack.translate(0, 24.0f / 16f, 0);
         }
     }
 
     @Override
-    public void renderToBuffer(PoseStack poseStack, @NotNull VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        Minecraft mc = Minecraft.getInstance();
-        MultiBufferSource bufferSource = mc.renderBuffers().bufferSource();
-        var vertexConsumer = bufferSource.getBuffer(this.getRenderType(this.getTexture()));
+    public void render(MatrixStack poseStack, @NotNull VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        VertexConsumerProvider bufferSource = mc.getBufferBuilders().getEntityVertexConsumers();
+        var vertexConsumer = bufferSource.getBuffer(this.getRenderLayer(this.getTexture()));
 
-        float partialTick = mc.getTimer().getGameTimeDeltaPartialTick(true);
+        float partialTick = mc.getRenderTickCounter().getTickDelta(true);
 
-        poseStack.pushPose();
+        poseStack.push();
         if (this.livingEntity != null && this.equipmentSlot != null && this.original != null) {
             scaleModelForBaby(poseStack, this.livingEntity, partialTick, this.equipmentSlot, this.original);
         }
 
-        var r = FastColor.ARGB32.red(color) / 255F;
-        var g = FastColor.ARGB32.green(color) / 255F;
-        var b = FastColor.ARGB32.blue(color) / 255F;
-        var a = FastColor.ARGB32.alpha(color) / 255F;
+        var r = ColorHelper.Argb.getRed(color) / 255F;
+        var g = ColorHelper.Argb.getGreen(color) / 255F;
+        var b = ColorHelper.Argb.getBlue(color) / 255F;
+        var a = ColorHelper.Argb.getAlpha(color) / 255F;
 
         model.renderToBuffer(poseStack, vertexConsumer, packedLight, packedOverlay, r, g, b, a);
-        poseStack.popPose();
+        poseStack.pop();
 
         afterRender(poseStack, buffer, packedLight, packedOverlay, r, g, b, a);
     }
 
-    public void afterRender(PoseStack poseStack, VertexConsumer buffer, int light, int overlay,
+    public void afterRender(MatrixStack poseStack, VertexConsumer buffer, int light, int overlay,
                             float r, float g, float b, float a) {
         this.livingEntity = null;
         this.itemStack = null;
@@ -147,11 +145,11 @@ public class GeoArmorRenderer extends HumanoidModel {
         this.original = null;
     }
 
-    public RenderType getRenderType(ResourceLocation texture) {
-        return RenderType.armorCutoutNoCull(texture);
+    public RenderLayer getRenderLayer(Identifier texture) {
+        return RenderLayer.getArmorCutoutNoCull(texture);
     }
 
-    public ResourceLocation getTexture() {
+    public Identifier getTexture() {
         return this.texture;
     }
 

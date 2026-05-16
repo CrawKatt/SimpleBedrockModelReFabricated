@@ -8,31 +8,29 @@ import com.maydaymemory.mae.basic.*;
 import com.maydaymemory.mae.blend.*;
 import com.maydaymemory.mae.control.montage.*;
 import example.resource.KnownResources;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.loading.FMLLoader;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 
 import java.util.*;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+//@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class DeagleAnimationGraph implements GunAnimationGraph{
     private static final EulerAdditiveBlender eulerAdditiveBlender = new SimpleEulerAdditiveBlender(new ZYXBoneTransformFactory(), ArrayPoseBuilder::new);
 
     private static Map<String, BedrockAnimation> animations;
     private static BedrockModel model;
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onRegisterModelReloadListener(RegisterBedrockModelReloadListenerEvent event) {
         event.register(map -> model = map.get(KnownResources.DEAGLE));
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onRegisterAnimationReloadListener(RegisterBedrockAnimationReloadListenerEvent event) {
         event.register(map -> {
             animations = new HashMap<>();
@@ -57,7 +55,7 @@ public class DeagleAnimationGraph implements GunAnimationGraph{
         this.animationInstance = animationInstance;
         // 动画资产在这里是每次创建 graph 都重新获取、构建一遍。生产环境中也许需要找个合适的地方将他们缓存起来。
         // 初始化 layer，只参与混合，所以只需要客户端执行
-        if (FMLLoader.getDist() == Dist.CLIENT) {
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
             handAndRootLayer = new SkeletonBaseLayerBlend(new SkeletonDescendantAccessorAdapter(model));
             handAndRootLayer.addControlPoint(model.getIndex("root"), 0, 1f);
             handAndRootLayer.addControlPoint(model.getIndex("lefthand"), 1, 1f);
@@ -197,12 +195,15 @@ public class DeagleAnimationGraph implements GunAnimationGraph{
         return eulerAdditiveBlender.blend(model.getBindPose(), animationPose);
     }
 
-    private void consumeSounds(Iterable<Keyframe<ResourceLocation>> sounds) {
-        Player player = animationInstance.getPlayer();
-        Level level = player.level();
-        for (Keyframe<ResourceLocation> keyframe : sounds) {
-            SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(keyframe.getValue());
-            level.playSound(player, player, soundEvent, SoundSource.PLAYERS, 1.0f, 1.0f);
+    private void consumeSounds(Iterable<Keyframe<Identifier>> sounds) {
+        PlayerEntity player = animationInstance.getPlayer();
+        World world = player.getWorld();
+
+        for (Keyframe<Identifier> keyframe : sounds) {
+            SoundEvent soundEvent =
+                    SoundEvent.of(keyframe.getValue());
+
+            world.playSound(null, player.getX(), player.getY(), player.getZ(), soundEvent, SoundCategory.PLAYERS, 1.0f, 1.0f);
         }
     }
 }

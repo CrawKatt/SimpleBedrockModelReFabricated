@@ -1,7 +1,7 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.animation;
 
 import com.maydaymemory.mae.basic.Pose;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 

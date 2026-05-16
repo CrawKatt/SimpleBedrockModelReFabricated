@@ -4,43 +4,41 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockAnim
 import com.github.mcmodderanchor.simplebedrockmodel.v1.event.RegisterBedrockModelEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.resource.RawResourceLoaders;
 import example.init.ExampleModRegister;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+//@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class KnownResources {
-    public static final ArrayList<ResourceLocation> ANIMATION_AND_MODEL = new ArrayList<>();
-    public static final ArrayList<ResourceLocation> MODEL = new ArrayList<>();
+    public static final ArrayList<Identifier> ANIMATION_AND_MODEL = new ArrayList<>();
+    public static final ArrayList<Identifier> MODEL = new ArrayList<>();
 
-    public static final ResourceLocation TEST = registerAnimationAndModel(ResourceLocation.fromNamespaceAndPath(ExampleModRegister.MOD_ID, "test"));
-    public static final ResourceLocation DEAGLE = registerAnimationAndModel(ResourceLocation.fromNamespaceAndPath(ExampleModRegister.MOD_ID, "deagle"));
+    public static final Identifier TEST = registerAnimationAndModel(Identifier.of(ExampleModRegister.MOD_ID, "test"));
+    public static final Identifier DEAGLE = registerAnimationAndModel(Identifier.of(ExampleModRegister.MOD_ID, "deagle"));
 
-    private static ResourceLocation registerAnimationAndModel(ResourceLocation location) {
+    private static Identifier registerAnimationAndModel(Identifier location) {
         ANIMATION_AND_MODEL.add(location);
         return location;
     }
 
-    private static ResourceLocation registerModel(ResourceLocation location) {
+    private static Identifier registerModel(Identifier location) {
         MODEL.add(location);
         return location;
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onAnimationRegister(RegisterBedrockAnimationEvent event) {
-        for (ResourceLocation resourceLocation : ANIMATION_AND_MODEL) {
+        for (Identifier resourceLocation : ANIMATION_AND_MODEL) {
             event.register(resourceLocation, resourceLocation, RawResourceLoaders.COMMON_LOADER);
         }
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onModelRegister(RegisterBedrockModelEvent event) {
-        for (ResourceLocation resourceLocation : MODEL) {
+        for (Identifier resourceLocation : MODEL) {
             event.register(resourceLocation, RawResourceLoaders.COMMON_LOADER);
         }
-        for (ResourceLocation resourceLocation : ANIMATION_AND_MODEL) {
+        for (Identifier resourceLocation : ANIMATION_AND_MODEL) {
             event.register(resourceLocation, RawResourceLoaders.COMMON_LOADER);
         }
     }

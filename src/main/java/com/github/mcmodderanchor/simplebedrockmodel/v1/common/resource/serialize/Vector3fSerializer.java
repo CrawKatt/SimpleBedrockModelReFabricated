@@ -1,7 +1,7 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.serialize;
 
 import com.google.gson.*;
-import net.minecraft.util.GsonHelper;
+import net.minecraft.util.JsonHelper;
 import org.joml.Vector3f;
 
 import java.lang.reflect.Type;
@@ -14,9 +14,9 @@ public class Vector3fSerializer implements JsonDeserializer<Vector3f>, JsonSeria
             JsonElement xElement = array.get(0);
             JsonElement yElement = array.get(1);
             JsonElement zElement = array.get(2);
-            float x = GsonHelper.convertToFloat(xElement, "(array i=0)");
-            float y = GsonHelper.convertToFloat(yElement, "(array i=1)");
-            float z = GsonHelper.convertToFloat(zElement, "(array i=2)");
+            float x = JsonHelper.asFloat(xElement, "(array i=0)");
+            float y = JsonHelper.asFloat(yElement, "(array i=1)");
+            float z = JsonHelper.asFloat(zElement, "(array i=2)");
             return new Vector3f(x, y, z);
         } else {
             throw new JsonSyntaxException("Expected " + json + " to be a Vector3f because it's not an array");

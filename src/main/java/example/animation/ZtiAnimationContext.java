@@ -8,20 +8,18 @@ import com.maydaymemory.mae.control.Tickable;
 import com.maydaymemory.mae.control.runner.*;
 import example.client.render.entity.ZtiRenderer;
 import example.entity.Zti;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+//@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class ZtiAnimationContext implements Tickable {
     private static BedrockAnimation IDLE;
     private static BedrockAnimation RUNNING;
     private static final List<BedrockAnimation> ATTACKS = new ArrayList<>();
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onAnimationReloadListenerRegister(RegisterBedrockAnimationReloadListenerEvent event) {
         event.register(map -> {
             List<BedrockAnimation> animations = map.get(ZtiRenderer.ANIMATION);
@@ -72,7 +70,7 @@ public class ZtiAnimationContext implements Tickable {
     }
 
     public boolean isMoving() {
-        return entity.getDeltaMovement().horizontalDistanceSqr() > 1.0E-4D;
+        return entity.getVelocity().horizontalLengthSquared() > 1.0E-4D;
     }
 
     public boolean consumeAttackTrigger() {

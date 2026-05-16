@@ -2,24 +2,23 @@ package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
 import com.maydaymemory.mae.basic.BoneTransform;
 import com.maydaymemory.mae.basic.ZYXRotationView;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import net.minecraft.client.renderer.LightTexture;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public class BedrockBone {
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     private static class ClientConstants {
         private static final Vector3f[] NORMALS = new Vector3f[6];
-        private static final int MAX_LIGHT_TEXTURE = LightTexture.pack(15, 15);
+        private static final int MAX_LIGHT_TEXTURE = LightmapTextureManager.pack(15, 15);
 
         static {
             for (int i = 0; i < ClientConstants.NORMALS.length; i++) {
@@ -45,13 +44,13 @@ public class BedrockBone {
     public boolean illuminated = false;
     public boolean mirror;
 
-    @OnlyIn(Dist.CLIENT)
-    public void render(PoseStack poseStack, VertexConsumer consumer, int lightmap, int overlay) {
+    @Environment(EnvType.CLIENT)
+    public void render(MatrixStack poseStack, VertexConsumer consumer, int lightmap, int overlay) {
         this.render(poseStack, consumer, lightmap, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public void render(PoseStack poseStack, VertexConsumer consumer, int lightmap, int overlay, float red, float green, float blue, float alpha) {
+    @Environment(EnvType.CLIENT)
+    public void render(MatrixStack poseStack, VertexConsumer consumer, int lightmap, int overlay, float red, float green, float blue, float alpha) {
         int cubePackedLight = illuminated ?  ClientConstants.MAX_LIGHT_TEXTURE : lightmap;
         if (this.visible) {
             // 缩放过小时，直接退出渲染
@@ -63,32 +62,32 @@ public class BedrockBone {
             }
 
             if (!this.cubes.isEmpty() || !this.children.isEmpty()) {
-                poseStack.pushPose();
+                poseStack.push();
                 this.translateAndRotateAndScale(poseStack);
-                this.compile(poseStack.last(), consumer, cubePackedLight, overlay, red, green, blue, alpha);
+                this.compile(poseStack.peek(), consumer, cubePackedLight, overlay, red, green, blue, alpha);
 
                 for (BedrockBone part : this.children) {
                     part.render(poseStack, consumer, cubePackedLight, overlay, red, green, blue, alpha);
                 }
 
-                poseStack.popPose();
+                poseStack.pop();
             }
         }
     }
 
-    public void translateAndRotateAndScale(PoseStack poseStack) {
+    public void translateAndRotateAndScale(MatrixStack poseStack) {
         poseStack.translate(this.x / 16.0F, this.y / 16.0F, this.z / 16.0F);
-        poseStack.last().pose().rotate(rotation);
-        poseStack.last().normal().rotate(rotation);
+        poseStack.peek().getPositionMatrix().rotate(rotation);
+        poseStack.peek().getNormalMatrix().rotate(rotation);
         if (this.xScale != 0.0F || this.yScale != 0.0F || this.zScale != 0.0F) {
-            poseStack.last().pose().scale(this.xScale, this.yScale, this.zScale);
-            poseStack.last().normal().scale(this.xScale, this.yScale, this.zScale);
+            poseStack.peek().getPositionMatrix().scale(this.xScale, this.yScale, this.zScale);
+            poseStack.peek().getNormalMatrix().scale(this.xScale, this.yScale, this.zScale);
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
-    private void compile(PoseStack.Pose pose, VertexConsumer consumer, int lightmap, int overlay, float red, float green, float blue, float alpha) {
-        Matrix3f normal = pose.normal();
+    @Environment(EnvType.CLIENT)
+    private void compile(MatrixStack.Entry pose, VertexConsumer consumer, int lightmap, int overlay, float red, float green, float blue, float alpha) {
+        Matrix3f normal = pose.getNormalMatrix();
         ClientConstants.NORMALS[0].set(-normal.m10, -normal.m11, -normal.m12);
         ClientConstants.NORMALS[1].set(normal.m10, normal.m11, normal.m12);
         ClientConstants.NORMALS[2].set(-normal.m20, -normal.m21, -normal.m22);

@@ -1,23 +1,21 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.event;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockModel;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.bus.api.Event;
-import net.neoforged.fml.event.IModBusEvent;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class RegisterBedrockModelReloadListenerEvent extends Event implements IModBusEvent {
-    private final List<Consumer<Map<ResourceLocation, BedrockModel>>> listeners = new ArrayList<>();
+public class RegisterBedrockModelReloadListenerEvent {
+    private final List<Consumer<Map<Identifier, BedrockModel>>> listeners = new ArrayList<>();
 
-    public void register(Consumer<Map<ResourceLocation, BedrockModel>> listener) {
+    public void register(Consumer<Map<Identifier, BedrockModel>> listener) {
         this.listeners.add(listener);
     }
 
-    public List<Consumer<Map<ResourceLocation, BedrockModel>>> getListeners() {
+    public List<Consumer<Map<Identifier, BedrockModel>>> getListeners() {
         return listeners;
     }
 }

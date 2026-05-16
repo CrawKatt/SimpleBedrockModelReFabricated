@@ -1,8 +1,5 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
-import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.embeddium.EmbeddiumBedrockCubeBox;
-import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.embeddium.EmbeddiumBedrockCubePerFace;
-import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.embeddium.EmbeddiumCompat;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium.SodiumBedrockCubeBox;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium.SodiumBedrockCubePerFace;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium.SodiumCompat;
@@ -10,18 +7,18 @@ import com.github.mcmodderanchor.simplebedrockmodel.v1.common.BoneIndexProvider;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.*;
 import com.google.common.collect.Collections2;
 import com.maydaymemory.mae.basic.*;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.world.phys.AABB;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.Box;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
+//import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
 
 public class BedrockModel implements Skeleton, BoneIndexProvider {
@@ -41,7 +38,7 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
     /**
      * 模型的 AABB
      */
-    protected AABB renderBoundingBox;
+    protected Box renderBoundingBox;
     /**
      * 模型默认的 Pose
      */
@@ -89,7 +86,7 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
             float offsetZ = offset[2];
             float width = description.getVisibleBoundsWidth() / 2.0f;
             float height = description.getVisibleBoundsHeight() / 2.0f;
-            renderBoundingBox = new AABB(offsetX - width, offsetY - height, offsetZ - width, offsetX + width, offsetY + height, offsetZ + width);
+            renderBoundingBox = new Box(offsetX - width, offsetY - height, offsetZ - width, offsetX + width, offsetY + height, offsetZ + width);
             initialWithBoneItems(bones, texWidth, texHeight);
         } else {
             initialWithBoneItems(bones, 0, 0);
@@ -112,7 +109,7 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
             float offsetZ = offset[2];
             float width = pojo.getGeometryModelLegacy().getVisibleBoundsWidth() / 2.0f;
             float height = pojo.getGeometryModelLegacy().getVisibleBoundsHeight() / 2.0f;
-            renderBoundingBox = new AABB(offsetX - width, offsetY - height, offsetZ - width, offsetX + width, offsetY + height, offsetZ + width);
+            renderBoundingBox = new Box(offsetX - width, offsetY - height, offsetZ - width, offsetX + width, offsetY + height, offsetZ + width);
 
             initialWithBoneItems(bones, texWidth, texHeight);
         } else {
@@ -125,9 +122,6 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
         if (SodiumCompat.isSodiumInstalled()) {
             return new SodiumBedrockCubeBox(texOffX, texOffY, x, y, z, width, height, depth, delta, mirror, texWidth, texHeight);
         }
-        if (EmbeddiumCompat.isEmbeddiumInstalled()) {
-            return new EmbeddiumBedrockCubeBox(texOffX, texOffY, x, y, z, width, height, depth, delta, mirror, texWidth, texHeight);
-        }
         return new BedrockCubeBox(texOffX, texOffY, x, y, z, width, height, depth, delta, mirror, texWidth, texHeight);
     }
 
@@ -136,25 +130,22 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
         if (SodiumCompat.isSodiumInstalled()) {
             return new SodiumBedrockCubePerFace(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
         }
-        if (EmbeddiumCompat.isEmbeddiumInstalled()) {
-            return new EmbeddiumBedrockCubePerFace(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
-        }
         return new BedrockCubePerFace(x, y, z, width, height, depth, delta, texWidth, texHeight, faces);
     }
 
-    @OnlyIn(Dist.CLIENT)
-    @ParametersAreNonnullByDefault
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay) {
-        root.render(poseStack, buffer, packedLight, packedOverlay);
+    @Environment(EnvType.CLIENT)
+    //@ParametersAreNonnullByDefault
+    public void renderToBuffer(MatrixStack matrixStack, VertexConsumer buffer, int packedLight, int packedOverlay) {
+        root.render(matrixStack, buffer, packedLight, packedOverlay);
     }
 
-    @OnlyIn(Dist.CLIENT)
-    @ParametersAreNonnullByDefault
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-        root.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+    @Environment(EnvType.CLIENT)
+    //@ParametersAreNonnullByDefault
+    public void renderToBuffer(MatrixStack matrixStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        root.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
-    public AABB getRenderBoundingBox() {
+    public Box getRenderBoundingBox() {
         return renderBoundingBox;
     }
 

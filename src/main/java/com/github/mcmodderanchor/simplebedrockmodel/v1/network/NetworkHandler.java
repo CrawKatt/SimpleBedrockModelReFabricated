@@ -1,50 +1,72 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.network;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.network.message.ServerMessageSwapItem;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 
 public class NetworkHandler {
-    private static final String VERSION = "0.1.0";
 
-    public static void register(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar(VERSION);
-        registrar.playToClient(
+    public static void register() {
+        PayloadTypeRegistry.playS2C().register(
                 ServerMessageSwapItem.TYPE,
-                ServerMessageSwapItem.STREAM_CODEC,
-                ServerMessageSwapItem::handle
+                ServerMessageSwapItem.CODEC
         );
     }
 
-    public static void sendToClientPlayer(CustomPacketPayload message, Player player) {
-        if (player instanceof ServerPlayer serverPlayer) {
-            PacketDistributor.sendToPlayer(serverPlayer, message);
+    public static void sendToClientPlayer(
+            CustomPayload message,
+            PlayerEntity player
+    ) {
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            ServerPlayNetworking.send(serverPlayer, message);
         }
     }
 
-    /**
-     * 发送给所有监听此实体的玩家
-     */
-    public static void sendToTrackingEntityAndSelf(Entity centerEntity, CustomPacketPayload message) {
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(centerEntity, message);
+    public static void sendToTrackingEntityAndSelf(
+            Entity centerEntity,
+            CustomPayload message
+    ) {
+        PlayerLookup.tracking(centerEntity)
+                .forEach(player ->
+                        ServerPlayNetworking.send(player, message));
+
+        if (centerEntity instanceof ServerPlayerEntity self) {
+            ServerPlayNetworking.send(self, message);
+        }
     }
 
-    public static void sendToAllPlayers(CustomPacketPayload message) {
-        PacketDistributor.sendToAllPlayers(message);
+    public static void sendToAllPlayers(
+            ServerWorld world,
+            CustomPayload message
+    ) {
+        PlayerLookup.world(world)
+                .forEach(player ->
+                        ServerPlayNetworking.send(player, message));
     }
 
-    public static void sendToTrackingEntity(CustomPacketPayload message, final Entity centerEntity) {
-        PacketDistributor.sendToPlayersTrackingEntity(centerEntity, message);
+    public static void sendToTrackingEntity(
+            CustomPayload message,
+            Entity centerEntity
+    ) {
+        PlayerLookup.tracking(centerEntity)
+                .forEach(player ->
+                        ServerPlayNetworking.send(player, message));
     }
 
-    public static void sendToDimension(CustomPacketPayload message, final Entity centerEntity) {
-        if (centerEntity.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-            PacketDistributor.sendToPlayersInDimension(serverLevel, message);
+    public static void sendToDimension(
+            CustomPayload message,
+            Entity centerEntity
+    ) {
+        if (centerEntity.getWorld() instanceof ServerWorld serverWorld) {
+            PlayerLookup.world(serverWorld)
+                    .forEach(player ->
+                            ServerPlayNetworking.send(player, message));
         }
     }
 }

@@ -2,9 +2,9 @@ package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.FaceItem;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.FaceUVsItem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.core.Direction;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.Direction;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -76,8 +76,8 @@ public class BedrockCubePerFace implements BedrockCube {
     }
 
     @Override
-    public void compile(PoseStack.Pose pose, Vector3f[] normals, VertexConsumer consumer, int lightmap, int overlay, float r, float g, float b, float a) {
-        Matrix4f matrix4f = pose.pose();
+    public void compile(MatrixStack.Entry entry, Vector3f[] normals, VertexConsumer consumer, int lightmap, int overlay, float r, float g, float b, float a) {
+        Matrix4f matrix4f = entry.getPositionMatrix();
         prepareVertices(matrix4f);
 
         for (int i = 0; i < NUM_CUBE_FACES; i++) {
@@ -87,21 +87,21 @@ public class BedrockCubePerFace implements BedrockCube {
 
             // uvs[i]: [右上U, 右上V, 左上U, 左上V, 左下U, 左下V, 右下U, 右下V]
             // 顶点0: 右上, 顶点1: 左上, 顶点2: 左下, 顶点3: 右下
-            consumer.addVertex(VERTICES[VERTEX_ORDER[i][0]].x, VERTICES[VERTEX_ORDER[i][0]].y, VERTICES[VERTEX_ORDER[i][0]].z)
-                    .setColor(r, g, b, a).setUv(uvs[i][0], uvs[i][1])
-                    .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
+            consumer.vertex(VERTICES[VERTEX_ORDER[i][0]].x, VERTICES[VERTEX_ORDER[i][0]].y, VERTICES[VERTEX_ORDER[i][0]].z)
+                    .color(r, g, b, a).texture(uvs[i][0], uvs[i][1])
+                    .overlay(overlay).light(lightmap).normal(normals[i].x, normals[i].y, normals[i].z);
 
-            consumer.addVertex(VERTICES[VERTEX_ORDER[i][1]].x, VERTICES[VERTEX_ORDER[i][1]].y, VERTICES[VERTEX_ORDER[i][1]].z)
-                    .setColor(r, g, b, a).setUv(uvs[i][2], uvs[i][3])
-                    .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
+            consumer.vertex(VERTICES[VERTEX_ORDER[i][1]].x, VERTICES[VERTEX_ORDER[i][1]].y, VERTICES[VERTEX_ORDER[i][1]].z)
+                    .color(r, g, b, a).texture(uvs[i][2], uvs[i][3])
+                    .overlay(overlay).light(lightmap).normal(normals[i].x, normals[i].y, normals[i].z);
 
-            consumer.addVertex(VERTICES[VERTEX_ORDER[i][2]].x, VERTICES[VERTEX_ORDER[i][2]].y, VERTICES[VERTEX_ORDER[i][2]].z)
-                    .setColor(r, g, b, a).setUv(uvs[i][4], uvs[i][5])
-                    .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
+            consumer.vertex(VERTICES[VERTEX_ORDER[i][2]].x, VERTICES[VERTEX_ORDER[i][2]].y, VERTICES[VERTEX_ORDER[i][2]].z)
+                    .color(r, g, b, a).texture(uvs[i][4], uvs[i][5])
+                    .overlay(overlay).light(lightmap).normal(normals[i].x, normals[i].y, normals[i].z);
 
-            consumer.addVertex(VERTICES[VERTEX_ORDER[i][3]].x, VERTICES[VERTEX_ORDER[i][3]].y, VERTICES[VERTEX_ORDER[i][3]].z)
-                    .setColor(r, g, b, a).setUv(uvs[i][6], uvs[i][7])
-                    .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
+            consumer.vertex(VERTICES[VERTEX_ORDER[i][3]].x, VERTICES[VERTEX_ORDER[i][3]].y, VERTICES[VERTEX_ORDER[i][3]].z)
+                    .color(r, g, b, a).texture(uvs[i][6], uvs[i][7])
+                    .overlay(overlay).light(lightmap).normal(normals[i].x, normals[i].y, normals[i].z);
         }
     }
 

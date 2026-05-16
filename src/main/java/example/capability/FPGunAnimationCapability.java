@@ -1,8 +1,7 @@
 package example.capability;
 
 import example.animation.FPGunAnimationInstance;
-import example.init.ExampleModRegister;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
 
 public class FPGunAnimationCapability implements IFPGunAnimationCapability{
     private FPGunAnimationInstance animationInstance;
@@ -11,7 +10,7 @@ public class FPGunAnimationCapability implements IFPGunAnimationCapability{
     public FPGunAnimationCapability() {
     }
 
-    public void setPlayer(Player player) {
+    public void setPlayer(PlayerEntity player) {
         if (this.animationInstance == null) {
             this.animationInstance = new FPGunAnimationInstance(player);
         }
@@ -30,13 +29,15 @@ public class FPGunAnimationCapability implements IFPGunAnimationCapability{
         this.lastSelected = lastSelected;
     }
 
-    public static FPGunAnimationCapability get(Player player) {
+    /*
+    public static FPGunAnimationCapability get(PlayerEntity player) {
         var data = player.getData(ExampleModRegister.FP_GUN_ANIMATION);
         if (!data.inited()) {
             data.setPlayer(player);
         }
         return data;
     }
+    */
 
     private boolean inited() {
         return animationInstance != null;

@@ -1,14 +1,13 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.compat.sodium;
 
-
-import net.neoforged.fml.ModList;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class SodiumCompat {
     public static final String SODIUM = "sodium";
     public static boolean IS_SODIUM_INSTALLED = false;
 
     public static void init() {
-        IS_SODIUM_INSTALLED = ModList.get().getModContainerById(SODIUM).isPresent();
+        IS_SODIUM_INSTALLED = FabricLoader.getInstance().isModLoaded(SODIUM);
     }
 
     public static boolean isSodiumInstalled() {

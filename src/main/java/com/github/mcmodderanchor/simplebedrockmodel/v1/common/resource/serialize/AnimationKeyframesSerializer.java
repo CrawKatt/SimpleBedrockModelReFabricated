@@ -1,9 +1,10 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.serialize;
 
+import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.GsonUtil;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.AnimationKeyframes;
 import com.google.gson.*;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectRBTreeMap;
-import net.minecraft.util.GsonHelper;
+import net.minecraft.util.JsonHelper;
 import org.joml.Vector3f;
 
 import java.lang.reflect.Type;
@@ -88,7 +89,7 @@ public class AnimationKeyframesSerializer implements JsonDeserializer<AnimationK
         if (element.getAsJsonPrimitive().isString()) {
             return 0;
         } else {
-            return GsonHelper.convertToFloat(element, memberName);
+            return JsonHelper.asFloat(element, memberName);
         }
     }
 }

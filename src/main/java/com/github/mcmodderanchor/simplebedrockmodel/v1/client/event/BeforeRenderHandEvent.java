@@ -1,6 +1,6 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.event;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.util.math.MatrixStack;
 import net.neoforged.bus.api.Event;
 
 
@@ -9,15 +9,15 @@ import net.neoforged.bus.api.Event;
  * 用于相机动画相关调用
  */
 public class BeforeRenderHandEvent extends Event {
-    private final PoseStack poseStack;
+    private final MatrixStack poseStack;
     private final float partialTick;
 
-    public BeforeRenderHandEvent(PoseStack poseStack, float partialTicks) {
+    public BeforeRenderHandEvent(MatrixStack poseStack, float partialTicks) {
         this.poseStack = poseStack;
         this.partialTick = partialTicks;
     }
 
-    public PoseStack getPoseStack() {
+    public MatrixStack getPoseStack() {
         return poseStack;
     }
 

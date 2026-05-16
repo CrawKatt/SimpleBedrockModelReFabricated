@@ -12,19 +12,17 @@ import com.maydaymemory.mae.control.misc.AnimationVelocityEstimatorNode;
 import com.maydaymemory.mae.control.misc.RealtimeVelocityEstimatorNode;
 import com.maydaymemory.mae.control.runner.AnimationRunner;
 import example.resource.KnownResources;
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 import java.util.List;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+//@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class TestBlockAnimationContext implements Tickable {
     public static final CubicHermiteInterpolatorBlender blender = new CubicHermiteInterpolatorBlender(new ZYXBoneTransformFactory(), ArrayPoseBuilder::new);
 
@@ -37,7 +35,7 @@ public class TestBlockAnimationContext implements Tickable {
     };
     private static final BedrockAnimation[] ANIMATIONS_CACHE = new BedrockAnimation[ANIMATIONS.length];
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onAnimationReloadListenerRegister(RegisterBedrockAnimationReloadListenerEvent event) {
         event.register(map -> {
             List<BedrockAnimation> animations = map.get(KnownResources.TEST);
@@ -105,29 +103,29 @@ public class TestBlockAnimationContext implements Tickable {
     public void tick() {
         if (runner != null) {
             runner.tick();
-            Level level = blockEntity.getLevel();
-            if (level != null && !level.isClientSide) {
+            World world = blockEntity.getWorld();
+            if (world != null && !world.isClient) {
                 @SuppressWarnings("unchecked")
-                Iterable<Keyframe<ResourceLocation>> sounds = runner.clip(BedrockAnimation.SOUND_CHANNEL_NAME);
+                Iterable<Keyframe<Identifier>> sounds = runner.clip(BedrockAnimation.SOUND_CHANNEL_NAME);
                 if (sounds != null) {
-                    for (Keyframe<ResourceLocation> keyframe : sounds) {
-                        BlockPos pos = blockEntity.getBlockPos();
-                        SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(keyframe.getValue());
-                        level.playSound(null, pos, soundEvent, SoundSource.BLOCKS);
+                    for (Keyframe<Identifier> keyframe : sounds) {
+                        BlockPos pos = blockEntity.getPos();
+                        SoundEvent soundEvent = SoundEvent.of(keyframe.getValue());
+                        world.playSound(null, pos, soundEvent, SoundCategory.BLOCKS);
                     }
                 }
             }
         }
     }
 
-    public CompoundTag getUpdateTag() {
-        CompoundTag tag = new CompoundTag();
+    public NbtCompound getUpdateTag() {
+        NbtCompound tag = new NbtCompound();
         tag.putInt("AnimationIndex", currentAnimationIndex);
         tag.putBoolean("NeedTransition", needTransition);
         return tag;
     }
 
-    public void handleUpdateTag(CompoundTag tag) {
+    public void handleUpdateTag(NbtCompound tag) {
         currentAnimationIndex = tag.getInt("AnimationIndex");
         needTransition = tag.getBoolean("NeedTransition");
     }

@@ -3,8 +3,8 @@ package com.github.mcmodderanchor.simplebedrockmodel.v1.client.model;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockBone;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.model.BedrockModel;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.BedrockModelPOJO;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.client.util.math.MatrixStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -32,23 +32,23 @@ public class BedrockModelBase extends BedrockModel implements PositionableModel 
         this.scales = scales;
     }
 
-    public void applyTransform(PoseStack poseStack, ItemDisplayContext ctx) {
+    public void applyTransform(MatrixStack matrixStack, ModelTransformationMode ctx) {
         Vector3f scale = scales == null ? DEFAULT_SCALE : scales.fromTransformType(ctx);
         switch (ctx) {
-            case FIXED -> applyOriginTransform(fixedTransform, scale, poseStack);
-            case GROUND -> applyOriginTransform(groundTransform, scale, poseStack);
+            case FIXED -> applyOriginTransform(fixedTransform, scale, matrixStack);
+            case GROUND -> applyOriginTransform(groundTransform, scale, matrixStack);
             case THIRD_PERSON_RIGHT_HAND, THIRD_PERSON_LEFT_HAND ->
-                    applyOriginTransform(thirdPersonHandTransform, scale, poseStack);
+                    applyOriginTransform(thirdPersonHandTransform, scale, matrixStack);
             case FIRST_PERSON_RIGHT_HAND, FIRST_PERSON_LEFT_HAND ->
-                    applyOriginTransform(firstPersonHandTransform, scale, poseStack);
+                    applyOriginTransform(firstPersonHandTransform, scale, matrixStack);
         }
     }
 
-    private void applyOriginTransform(@Nullable PositionPointTransform transform, @Nullable Vector3f scaleVector, PoseStack poseStack) {
+    private void applyOriginTransform(@Nullable PositionPointTransform transform, @Nullable Vector3f scaleVector, MatrixStack poseStack) {
         if (transform != null) {
             Vector3f translation = transform.translation.mul(scaleVector, new Vector3f());
             poseStack.translate(translation.x, translation.y, translation.z);
-            poseStack.mulPose(transform.rotation);
+            poseStack.multiply(transform.rotation);
         }
         if (scaleVector != null) {
             poseStack.scale(scaleVector.x, scaleVector.y, scaleVector.z);

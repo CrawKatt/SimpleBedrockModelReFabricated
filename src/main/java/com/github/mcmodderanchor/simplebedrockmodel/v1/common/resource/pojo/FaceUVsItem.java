@@ -1,9 +1,8 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo;
 
 import com.google.gson.annotations.SerializedName;
-import net.minecraft.core.Direction;
-
-import javax.annotation.Nullable;
+import net.minecraft.util.math.Direction;
+import org.jetbrains.annotations.Nullable;
 
 public class FaceUVsItem {
     @SerializedName("down")

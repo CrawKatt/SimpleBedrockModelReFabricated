@@ -1,10 +1,9 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.model;
 
 import com.google.gson.annotations.SerializedName;
-import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
-
-import javax.annotation.Nullable;
 
 public class TransformScale {
     @SerializedName("thirdperson")
@@ -41,7 +40,7 @@ public class TransformScale {
     }
 
     @Nullable
-    public Vector3f fromTransformType(ItemDisplayContext transformType) {
+    public Vector3f fromTransformType(ModelTransformationMode transformType) {
         switch (transformType) {
             case FIRST_PERSON_LEFT_HAND, FIRST_PERSON_RIGHT_HAND -> {
                 return firstPerson;

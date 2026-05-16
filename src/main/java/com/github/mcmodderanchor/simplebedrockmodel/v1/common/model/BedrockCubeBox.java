@@ -1,8 +1,8 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.model;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.util.Mth;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.MathHelper;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -50,9 +50,9 @@ public class BedrockCubeBox implements BedrockCube {
         this.height = (height + delta * 2) / 16.0f;
         this.depth = (depth + delta * 2) / 16.0f;
 
-        float dx = Mth.floor(width);
-        float dy = Mth.floor(height);
-        float dz = Mth.floor(depth);
+        float dx = MathHelper.floor(width);
+        float dy = MathHelper.floor(height);
+        float dz = MathHelper.floor(depth);
 
         float scaleU = 1.0f / texWidth;
         float scaleV = 1.0f / texHeight;
@@ -86,26 +86,26 @@ public class BedrockCubeBox implements BedrockCube {
     }
 
     @Override
-    public void compile(PoseStack.Pose pose, Vector3f[] normals, VertexConsumer consumer, int lightmap, int overlay, float r, float g, float b, float a) {
-        Matrix4f matrix4f = pose.pose();
+    public void compile(MatrixStack.Entry entry, Vector3f[] normals, VertexConsumer consumer, int lightmap, int overlay, float r, float g, float b, float a) {
+        Matrix4f matrix4f = entry.getPositionMatrix();
         prepareVertices(matrix4f);
 
         for (int i = 0; i < NUM_CUBE_FACES; i++) {
-            consumer.addVertex(VERTICES[VERTEX_ORDER[i][0]].x, VERTICES[VERTEX_ORDER[i][0]].y, VERTICES[VERTEX_ORDER[i][0]].z)
-                    .setColor(r, g, b, a).setUv(uvs[uvOrder[i][1]], uvs[uvOrder[i][2]])
-                    .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
+            consumer.vertex(VERTICES[VERTEX_ORDER[i][0]].x, VERTICES[VERTEX_ORDER[i][0]].y, VERTICES[VERTEX_ORDER[i][0]].z)
+                    .color(r, g, b, a).texture(uvs[uvOrder[i][1]], uvs[uvOrder[i][2]])
+                    .overlay(overlay).light(lightmap).normal(normals[i].x, normals[i].y, normals[i].z);
 
-            consumer.addVertex(VERTICES[VERTEX_ORDER[i][1]].x, VERTICES[VERTEX_ORDER[i][1]].y, VERTICES[VERTEX_ORDER[i][1]].z)
-                    .setColor(r, g, b, a).setUv(uvs[uvOrder[i][0]], uvs[uvOrder[i][2]])
-                    .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
+            consumer.vertex(VERTICES[VERTEX_ORDER[i][1]].x, VERTICES[VERTEX_ORDER[i][1]].y, VERTICES[VERTEX_ORDER[i][1]].z)
+                    .color(r, g, b, a).texture(uvs[uvOrder[i][0]], uvs[uvOrder[i][2]])
+                    .overlay(overlay).light(lightmap).normal(normals[i].x, normals[i].y, normals[i].z);
 
-            consumer.addVertex(VERTICES[VERTEX_ORDER[i][2]].x, VERTICES[VERTEX_ORDER[i][2]].y, VERTICES[VERTEX_ORDER[i][2]].z)
-                    .setColor(r, g, b, a).setUv(uvs[uvOrder[i][0]], uvs[uvOrder[i][3]])
-                    .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
+            consumer.vertex(VERTICES[VERTEX_ORDER[i][2]].x, VERTICES[VERTEX_ORDER[i][2]].y, VERTICES[VERTEX_ORDER[i][2]].z)
+                    .color(r, g, b, a).texture(uvs[uvOrder[i][0]], uvs[uvOrder[i][3]])
+                    .overlay(overlay).light(lightmap).normal(normals[i].x, normals[i].y, normals[i].z);
 
-            consumer.addVertex(VERTICES[VERTEX_ORDER[i][3]].x, VERTICES[VERTEX_ORDER[i][3]].y, VERTICES[VERTEX_ORDER[i][3]].z)
-                    .setColor(r, g, b, a).setUv(uvs[uvOrder[i][1]], uvs[uvOrder[i][3]])
-                    .setOverlay(overlay).setLight(lightmap).setNormal(normals[i].x, normals[i].y, normals[i].z);
+            consumer.vertex(VERTICES[VERTEX_ORDER[i][3]].x, VERTICES[VERTEX_ORDER[i][3]].y, VERTICES[VERTEX_ORDER[i][3]].z)
+                    .color(r, g, b, a).texture(uvs[uvOrder[i][1]], uvs[uvOrder[i][3]])
+                    .overlay(overlay).light(lightmap).normal(normals[i].x, normals[i].y, normals[i].z);
         }
     }
 

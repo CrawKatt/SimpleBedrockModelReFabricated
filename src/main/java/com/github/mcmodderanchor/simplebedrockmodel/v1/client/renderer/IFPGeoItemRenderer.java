@@ -1,18 +1,18 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.animation.IFPAnimationInstance;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public interface IFPGeoItemRenderer {
 
     default boolean isSameItem(ItemStack oldStack, ItemStack newStack) {
-        return ItemStack.isSameItem(oldStack, newStack);
+        return ItemStack.areEqual(oldStack, newStack);
     }
 
     @Nullable
@@ -28,6 +28,6 @@ public interface IFPGeoItemRenderer {
         return false;
     }
 
-    void renderFirstPerson(LocalPlayer player, ItemStack stack, ItemDisplayContext ctx, PoseStack poseStack, MultiBufferSource bufferSource,
-                                  int light, float partialTick);
+    void renderFirstPerson(ClientPlayerEntity player, ItemStack stack, ModelTransformationMode ctx, MatrixStack matrixStack, VertexConsumerProvider bufferSource,
+                           int light, float partialTick);
 }

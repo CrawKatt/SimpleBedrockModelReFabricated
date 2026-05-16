@@ -3,22 +3,17 @@ package com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.animation.IFPAnimationInstance;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.SwapItemWithOffHand;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.IFPGeoItemRenderer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
-import net.neoforged.neoforge.client.event.RenderHandEvent;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
 
 import java.util.Optional;
 
-@EventBusSubscriber(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class FirstPersonRenderHandler {
 
     private static int realSelectedSlot = -1;
@@ -39,7 +34,7 @@ public class FirstPersonRenderHandler {
 
     private static boolean forceHandSwapFlag = false;
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
         // 离开游戏时重置客户端状态
         reset();
@@ -58,18 +53,18 @@ public class FirstPersonRenderHandler {
     }
 
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onRenderHand(SwapItemWithOffHand event) {
         forceHandSwapFlag = true;
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onClientTick(RenderFrameEvent.Pre event) {
-        LocalPlayer player = Minecraft.getInstance().player;
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player == null) return;
 
-        int newSlot = player.getInventory().selected;
-        ItemStack newMain = player.getMainHandItem();
+        int newSlot = player.getInventory().selectedSlot;
+        ItemStack newMain = player.getMainHandStack();
 
         boolean slotChanged = newSlot != realSelectedSlot || forceHandSwapFlag;
         boolean itemChanged = !isSameItemStacks(realMainHand, newMain);
@@ -158,7 +153,7 @@ public class FirstPersonRenderHandler {
         }
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void tickAnimation(RenderFrameEvent.Pre event) {
         var ani = getActiveAnimationInstance();
         if (ani != null) {
@@ -167,9 +162,9 @@ public class FirstPersonRenderHandler {
         }
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
-        LocalPlayer player = Minecraft.getInstance().player;
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player == null) return;
 
         IFPAnimationInstance inst = getActiveAnimationInstance();
@@ -186,11 +181,11 @@ public class FirstPersonRenderHandler {
                 return;
             }
 
-            ItemDisplayContext transformType;
-            if (event.getHand() == InteractionHand.MAIN_HAND) {
-                transformType = ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
+            ModelTransformationMode transformType;
+            if (event.getHand() == Hand.MAIN_HAND) {
+                transformType = ModelTransformationMode.FIRST_PERSON_RIGHT_HAND;
             } else {
-                transformType = ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
+                transformType = ModelTransformationMode.FIRST_PERSON_LEFT_HAND;
             }
             renderer.renderFirstPerson(
                     player,
@@ -220,7 +215,7 @@ public class FirstPersonRenderHandler {
 
     private static IFPAnimationInstance createInstance(ItemStack stack) {
         return getRenderer(stack)
-                .map(r -> r.createAnimationInstance(stack, Minecraft.getInstance().getCameraEntity()))
+                .map(r -> r.createAnimationInstance(stack, MinecraftClient.getInstance().getCameraEntity()))
                 .orElse(null);
     }
 
@@ -256,6 +251,6 @@ public class FirstPersonRenderHandler {
 
         return getRenderer(oldStack)
                 .map(r -> r.isSameItem(oldStack, newStack))
-                .orElseGet(() -> ItemStack.isSameItem(oldStack, newStack));
+                .orElseGet(() -> ItemStack.areEqual(oldStack, newStack));
     }
 }

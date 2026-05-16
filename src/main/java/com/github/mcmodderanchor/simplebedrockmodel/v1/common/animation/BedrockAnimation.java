@@ -1,15 +1,15 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.common.animation;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.BoneIndexProvider;
-import com.github.mcmodderanchor.simplebedrockmodel.v1.common.ResourceLocationKeyframe;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.common.IdentifierKeyframe;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.*;
 import com.maydaymemory.mae.basic.*;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMap;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,9 +52,9 @@ public class BedrockAnimation extends BasicAnimation {
         }
         SoundEffectKeyframes soundEffects = pojo.getSoundEffects();
         if (soundEffects != null) {
-            ArrayList<Keyframe<ResourceLocation>> keyframes = new ArrayList<>();
-            for (Double2ObjectMap.Entry<ResourceLocation> entry : soundEffects.getKeyframes().double2ObjectEntrySet()) {
-                keyframes.add(new ResourceLocationKeyframe((float) entry.getDoubleKey(), entry.getValue()));
+            ArrayList<Keyframe<Identifier>> keyframes = new ArrayList<>();
+            for (Double2ObjectMap.Entry<Identifier> entry : soundEffects.getKeyframes().double2ObjectEntrySet()) {
+                keyframes.add(new IdentifierKeyframe((float) entry.getDoubleKey(), entry.getValue()));
             }
             animation.setClipChannel(SOUND_CHANNEL_NAME, new ArrayClipChannel<>(keyframes));
         }

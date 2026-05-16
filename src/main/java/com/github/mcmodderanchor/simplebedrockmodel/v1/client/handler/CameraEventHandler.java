@@ -3,17 +3,14 @@ package com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.BeforeRenderHandEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.RenderItemInHandBobEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.AbstractGeoItemRenderer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ViewportEvent;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.minecraft.client.network.ClientPlayerEntity;
 import org.joml.*;
 
-@EventBusSubscriber(value = Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class CameraEventHandler {
 
     // 测试用
@@ -67,9 +64,9 @@ public class CameraEventHandler {
     /**
      * 当主手拿着枪械物品的时候，取消应用在它上面的 viewBobbing，以便应用自定义的跑步/走路动画。
      */
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void cancelItemInHandViewBobbing(RenderItemInHandBobEvent.BobView event) {
-        LocalPlayer player = Minecraft.getInstance().player;
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player == null) {
             return;
         }
@@ -80,12 +77,12 @@ public class CameraEventHandler {
         }
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void applyLevelCameraAnimation(ViewportEvent.ComputeCameraAngles event) {
-        if (!Minecraft.getInstance().options.bobView().get()) {
+        if (!MinecraftClient.getInstance().options.bobView().get()) {
             return;
         }
-        LocalPlayer player = Minecraft.getInstance().player;
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player == null) {
             return;
         }
@@ -96,12 +93,12 @@ public class CameraEventHandler {
         }
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void applyItemInHandCameraAnimation(BeforeRenderHandEvent event) {
-        if (!Minecraft.getInstance().options.bobView().get()) {
+        if (!MinecraftClient.getInstance().options.bobView().get()) {
             return;
         }
-        LocalPlayer player = Minecraft.getInstance().player;
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player == null) {
             return;
         }

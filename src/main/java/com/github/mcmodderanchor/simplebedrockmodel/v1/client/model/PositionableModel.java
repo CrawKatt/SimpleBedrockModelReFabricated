@@ -1,8 +1,8 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.client.model;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.client.util.math.MatrixStack;
 
 public interface PositionableModel {
-    void applyTransform(PoseStack poseStack, ItemDisplayContext ctx);
+    void applyTransform(MatrixStack poseStack, ModelTransformationMode ctx);
 }

@@ -1,77 +1,12 @@
 plugins {
-    id 'java-library'
-    id 'idea'
-    id 'net.neoforged.moddev' version '2.0.+'
-    id "com.modrinth.minotaur" version "2.8.7"
+    id 'fabric-loom' version '1.10-SNAPSHOT'
     id 'maven-publish'
 }
 
-version = mod_version
-group = mod_group_id
-archivesBaseName = 'simplebedrockmodel'
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-
-neoForge {
-    version = project.neo_version
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
-    runs {
-        client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        data {
-            data()
-            programArguments.addAll '--mod', project.mod_id, '--all',
-                    '--output', file('src/generated/resources/').getAbsolutePath(),
-                    '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
-    }
-}
-
-sourceSets.main.resources {
-    srcDir 'src/generated/resources'
-}
-
-configurations {
-    runtimeClasspath.extendsFrom localRuntime
-
-    // 自定义一个 minecraftLibrary，方便引入需要 jarJar 的库
-    mcLib
-    implementation {
-        extendsFrom mcLib
-    }
-    additionalRuntimeClasspath {
-        extendsFrom mcLib
-    }
+version = project.mod_version
+group = project.maven_group
+base {
+    archivesName = project.archives_base_name
 }
 
 repositories {
@@ -85,117 +20,48 @@ repositories {
         content {
             includeGroup "curse.maven"
         }
-        content {
-            includeGroup "curse.maven"
-        }
     }
-    mavenLocal()
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/simplebedrockmodel.accesswidener")
 }
 
 dependencies {
-    implementation "maven.modrinth:sodium:mc1.21-0.6.0-beta.2-neoforge"
-    compileOnly "maven.modrinth:embeddium:1.0.11+mc1.21.1-neoforge"
-    mcLib jarJar("com.maydaymemory:mae:1.1.2") {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // MAE animation library - bundled
+    include(implementation("com.maydaymemory:mae:1.1.2") {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'org.joml', module: 'joml'
-    }
+    })
 
-    // 测试用mod
-    compileOnly "curse.maven:epic-fight-mod-405076:7734081"
-    runtimeOnly "curse.maven:playeranimator-658587:7389814"
+    implementation "org.apache.maven:maven-artifact:3.9.6"
+
+    // Sodium (optional, for render optimization compat)
+    modCompileOnly "maven.modrinth:sodium:mc1.21.1-0.6.0-fabric"
 }
 
-// 用于 neoforge.mods 里替换那一堆 ${xxxx}
-tasks.withType(ProcessResources).configureEach {
-    var replaceProperties = [
-            minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
-            loader_version_range   : loader_version_range,
-            mod_id                 : mod_id,
-            mod_name               : mod_name,
-            mod_license            : mod_license,
-            mod_version            : mod_version,
-            mod_authors            : mod_authors,
-            mod_description        : mod_description
-    ]
-    inputs.properties replaceProperties
+processResources {
+    inputs.property "version", project.mod_version
 
-    filesMatching(['META-INF/neoforge.mods.toml']) {
-        expand replaceProperties
+    filesMatching("fabric.mod.json") {
+        expand "version": project.mod_version
     }
 }
 
-// 生成 manifest 内容，用于填充版本信息等内容
-jar {
-    manifest {
-        attributes([
-                "Specification-Title"     : mod_id,
-                "Specification-Vendor"    : mod_authors,
-                "Specification-Version"   : version,
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : project.jar.archiveVersion,
-                "Implementation-Vendor"   : mod_authors,
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-    }
-    exclude 'example/**'
-    exclude 'assets/example/**'
-    exclude 'data/example/**'
-}
-
-// 让 idea 主动下载前置库的源码和 Javadoc
-// 新版本 idea 默认不会下载这两个，这虽然加快了构建速度，但是不方便调试
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
-    }
-}
-
-// 必须，编码需要显式指定为 UTF
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.release = 21
 }
 
 java {
-    // 编译源码文件，方便发布 maven
-    withSourcesJar()
-}
-
-modrinth {
-    token = System.getenv("MODRINTH_TOKEN")
-
-    projectId = mod_id
-    versionName = "${mod_id}-${version}"
-    versionNumber = mod_version
-    uploadFile = "${layout.buildDirectory.get()}/libs/${mod_id}-${version}.jar"
-    additionalFiles = ["${layout.buildDirectory.get()}/libs/${mod_id}-${version}-sources.jar"]
-    gameVersions = [minecraft_version]
-    loaders = ["neoforge"]
-    //debugMode = true
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = project.group
-            artifactId = archivesBaseName
-            version = project.version
-
-            from components.java
-
-            pom {
-                name = mod_name
-                description = mod_description
-                licenses {
-                    license {
-                        name = mod_license
-                    }
-                }
-            }
-        }
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
     }
+    withSourcesJar()
 }

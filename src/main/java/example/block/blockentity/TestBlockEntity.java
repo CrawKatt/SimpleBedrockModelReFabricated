@@ -2,12 +2,14 @@ package example.block.blockentity;
 
 import example.animation.TestBlockAnimationInstance;
 import example.init.ExampleModRegister;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 public class TestBlockEntity extends BlockEntity {
     private final TestBlockAnimationInstance animationInstance = new TestBlockAnimationInstance(this);
@@ -20,15 +22,15 @@ public class TestBlockEntity extends BlockEntity {
         return animationInstance;
     }
 
-    public void tick(Level pLevel, BlockPos pPos, BlockState pState) {
+    public void tick(World pLevel, BlockPos pPos, BlockState pState) {
         animationInstance.tick();
     }
 
     public void replicateAnimationInstance() {
-        this.setChanged();
-        if (level != null) {
-            BlockState state = level.getBlockState(worldPosition);
-            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
+        this.markDirty();
+        if (world != null) {
+            BlockState state = world.getBlockState(pos);
+            world.updateListeners(pos, state, state, Block.NOTIFY_ALL);
         }
     }
 
@@ -55,7 +57,7 @@ public class TestBlockEntity extends BlockEntity {
 //    }
 
     @Override
-    public ClientboundBlockEntityDataPacket getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
+    public Packet<ClientPlayPacketListener> toUpdatePacket() {
+        return BlockEntityUpdateS2CPacket.create(this);
     }
 }

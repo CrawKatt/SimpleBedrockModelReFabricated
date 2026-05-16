@@ -1,12 +1,9 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.mixin.client;
 
-import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.RenderItemInHandBobEvent;
-import com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.RenderLevelBobEvent;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.util.math.MatrixStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,16 +18,16 @@ public abstract class GameRendererMixin {
     private boolean sbm$useFovSetting;
 
     @Shadow
-    public abstract Minecraft getMinecraft();
+    public abstract MinecraftClient getClient();
 
 
-    @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
-    public void onBobHurt(PoseStack pMatrixStack, float pPartialTicks, CallbackInfo ci) {
-        boolean cancel;
+    @Inject(method = "tiltViewWhenHurt", at = @At("HEAD"), cancellable = true)
+    public void onBobHurt(MatrixStack pMatrixStack, float pPartialTicks, CallbackInfo ci) {
+        boolean cancel = true; // ToDo, Crear equivalente
         if (!sbm$useFovSetting) {
-            cancel = NeoForge.EVENT_BUS.post(new RenderItemInHandBobEvent.BobHurt()).isCanceled();
+            //cancel = NeoForge.EVENT_BUS.post(new RenderItemInHandBobEvent.BobHurt()).isCanceled();
         } else {
-            cancel = NeoForge.EVENT_BUS.post(new RenderLevelBobEvent.BobHurt()).isCanceled();
+            //cancel = NeoForge.EVENT_BUS.post(new RenderLevelBobEvent.BobHurt()).isCanceled();
         }
         if (cancel) {
             ci.cancel();
@@ -38,12 +35,12 @@ public abstract class GameRendererMixin {
     }
 
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
-    public void onBobView(PoseStack pMatrixStack, float pPartialTicks, CallbackInfo ci) {
-        boolean cancel;
+    public void onBobView(MatrixStack pMatrixStack, float pPartialTicks, CallbackInfo ci) {
+        boolean cancel = true; // ToDo: Crear equivalente
         if (!sbm$useFovSetting) {
-            cancel = NeoForge.EVENT_BUS.post(new RenderItemInHandBobEvent.BobView()).isCanceled();
+            //cancel = NeoForge.EVENT_BUS.post(new RenderItemInHandBobEvent.BobView()).isCanceled();
         } else {
-            cancel = NeoForge.EVENT_BUS.post(new RenderLevelBobEvent.BobView()).isCanceled();
+            //cancel = NeoForge.EVENT_BUS.post(new RenderLevelBobEvent.BobView()).isCanceled();
         }
         if (cancel) {
             ci.cancel();

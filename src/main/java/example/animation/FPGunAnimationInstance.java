@@ -1,17 +1,17 @@
 package example.animation;
 
 import example.item.GunItem;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public class FPGunAnimationInstance {
-    private final Player player;
+    private final PlayerEntity player;
     private GunAnimationGraph animationGraph;
     private boolean isRaisingGun;
     private boolean isCooling;
 
-    public FPGunAnimationInstance(Player player) {
+    public FPGunAnimationInstance(PlayerEntity player) {
         this.player = player;
     }
 
@@ -40,7 +40,7 @@ public class FPGunAnimationInstance {
     }
 
     public int getAmmoInMag() {
-        ItemStack selected = player.getInventory().getSelected();
+        ItemStack selected = player.getInventory().getMainHandStack();
         if (selected.getItem() instanceof GunItem gunItem) {
             if (gunItem.hasMagInstalled(selected)) {
                 return gunItem.getAmmoInMag(selected);
@@ -52,7 +52,7 @@ public class FPGunAnimationInstance {
     }
 
     public int getAmmoInGun() {
-        ItemStack selected = player.getInventory().getSelected();
+        ItemStack selected = player.getInventory().getMainHandStack();
         if (selected.getItem() instanceof GunItem gunItem) {
             return gunItem.getAmmoInGun(selected);
         }
@@ -60,7 +60,7 @@ public class FPGunAnimationInstance {
     }
 
     public boolean hasMagInstalled() {
-        ItemStack selected = player.getInventory().getSelected();
+        ItemStack selected = player.getInventory().getMainHandStack();
         if (selected.getItem() instanceof GunItem gunItem) {
             return gunItem.hasMagInstalled(selected);
         }
@@ -68,21 +68,21 @@ public class FPGunAnimationInstance {
     }
 
     public void setAmmoInGun(int ammoInGun) {
-        ItemStack selected = player.getInventory().getSelected();
+        ItemStack selected = player.getInventory().getMainHandStack();
         if (selected.getItem() instanceof GunItem gunItem) {
             gunItem.setAmmoInGun(selected, ammoInGun);
         }
     }
 
     public void setAmmoInMag(int ammoInMag) {
-        ItemStack selected = player.getInventory().getSelected();
+        ItemStack selected = player.getInventory().getMainHandStack();
         if (selected.getItem() instanceof GunItem gunItem) {
             gunItem.setAmmoInMag(selected, ammoInMag);
         }
     }
 
     public void setMagInstalled(boolean installed) {
-        ItemStack selected = player.getInventory().getSelected();
+        ItemStack selected = player.getInventory().getMainHandStack();
         if (selected.getItem() instanceof GunItem gunItem) {
             gunItem.setMagInstalled(selected, installed);
         }
@@ -108,7 +108,7 @@ public class FPGunAnimationInstance {
         isCooling = cooling;
     }
 
-    public Player getPlayer() {
+    public PlayerEntity getPlayer() {
         return player;
     }
 }

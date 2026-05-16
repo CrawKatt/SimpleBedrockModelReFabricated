@@ -2,7 +2,7 @@ package example.item;
 
 import example.animation.FPGunAnimationInstance;
 import example.animation.GunAnimationGraph;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 
 public interface GunItem {
     GunAnimationGraph getAnimationGraph(FPGunAnimationInstance animationInstance);

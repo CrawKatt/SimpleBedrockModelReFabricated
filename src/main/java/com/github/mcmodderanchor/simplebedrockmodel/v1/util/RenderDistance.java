@@ -1,15 +1,15 @@
 package com.github.mcmodderanchor.simplebedrockmodel.v1.util;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix4f;
 
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class RenderDistance {
     private static long GUI_RENDER_TIMESTAMP = -1L;
 
-    public static boolean inRenderHighPolyModelDistance(PoseStack poseStack, double distance) {
+    public static boolean inRenderHighPolyModelDistance(MatrixStack matrixStack, double distance) {
         if (isGuiRender()) {
             return true;
         }
@@ -17,7 +17,7 @@ public final class RenderDistance {
         if (distance <= 0) {
             return false;
         }
-        Matrix4f matrix4f = poseStack.last().pose();
+        Matrix4f matrix4f = matrixStack.peek().getPositionMatrix();
         float viewDistance = matrix4f.m30() * matrix4f.m30() + matrix4f.m31() * matrix4f.m31() + matrix4f.m32() * matrix4f.m32();
         return viewDistance < distance * distance;
     }
