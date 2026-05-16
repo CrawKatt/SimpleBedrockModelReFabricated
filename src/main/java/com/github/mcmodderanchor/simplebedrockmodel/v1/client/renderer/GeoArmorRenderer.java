@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 // 说是模型，实际上是一个适配器，用来敷衍原版的）
-public class GeoArmorRenderer extends BipedEntityModel {
+public class GeoArmorRenderer<T extends LivingEntity> extends BipedEntityModel<T> {
     @Nullable
     protected final BedrockArmorModel model;
     private final Identifier texture;
